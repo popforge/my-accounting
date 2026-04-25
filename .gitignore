@@ -1,0 +1,26 @@
+# BMAD
+_bmad
+_bmad-output
+.github/skills/bmad-*
+
+# Secrets locaux — jamais dans git
+deploy.env
+dev.env
+*.local.env
+docs/architecture/dev-secrets-setup.md
+
+# Neonctl context
+.neon
+
+# .NET build outputs
+bin/
+obj/
+*.user
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+
+# Logs
+*.log

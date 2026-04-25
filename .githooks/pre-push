@@ -1,0 +1,19 @@
+#!/bin/sh
+# pre-push — Popforge
+# Bloque la poussée si user.email n'est pas l'adresse noreply GitHub de Popforge.
+# Prévient l'erreur GH007 "Your push would publish a private email address."
+#
+# Installation automatique : scripts/setup-repo.ps1
+
+EXPECTED_EMAIL="37725632+popforge@users.noreply.github.com"
+CURRENT_EMAIL=$(git config user.email)
+
+if [ "$CURRENT_EMAIL" != "$EXPECTED_EMAIL" ]; then
+  printf "\n  !! ERREUR pre-push : mauvais user.email !!\n\n"
+  printf "     Actuel  : %s\n" "$CURRENT_EMAIL"
+  printf "     Attendu : %s\n\n" "$EXPECTED_EMAIL"
+  printf "  Corrigez avec :\n"
+  printf "    git config user.email \"%s\"\n" "$EXPECTED_EMAIL"
+  printf "    git commit --amend --reset-author --no-edit   # si le dernier commit a le mauvais email\n\n"
+  exit 1
+fi
