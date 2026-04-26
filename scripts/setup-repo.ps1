@@ -1,35 +1,30 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Initialise la configuration git locale d'un dépôt Popforge.
+    Initialise un nouveau depot GitHub personnel depuis un dossier non-git.
 
 .DESCRIPTION
-    À exécuter une fois après 'git init' ou 'git clone' pour un dépôt Popforge.
-    Configure l'identité, la branche principale, l'URL remote et installe les hooks.
+    Workflow cible et unique:
+    - part d'un dossier avec des fichiers mais sans .git
+    - propose des noms de depots
+    - cree le depot distant avec gh
+    - pousse le commit initial
+    - installe les hooks locaux
 
-    Pour un nouveau dépôt : copier '.githooks/' et 'scripts/setup-repo.ps1'
-    depuis un dépôt Popforge existant (ex : Popforge.Auth), puis exécuter ce script.
-
-.PARAMETER UserName
-    Nom d'auteur git local. Défaut : Poppy
+.PARAMETER Public
+    Cree le depot en public. Par defaut, le depot est prive.
 
 .PARAMETER UserEmail
-    Email git local. Doit être l'adresse noreply GitHub de Popforge.
-    Défaut : 37725632+popforge@users.noreply.github.com
-
-.PARAMETER GcmPrefix
-    Préfixe intégré dans l'URL remote HTTPS pour forcer GCM à utiliser le bon compte.
-    Défaut : popforge
+    Email noreply utilise par defaut pour les commits et le hook pre-push.
+    Tu peux le laisser tel quel pour ton workflow personnel.
 
 .EXAMPLE
-    cd C:\sources\rachellavoie\MonNouveauRepo
     .\scripts\setup-repo.ps1
 #>
 [CmdletBinding()]
 param(
-    [string]$UserName  = "Poppy",
-    [string]$UserEmail = "37725632+popforge@users.noreply.github.com",
-    [string]$GcmPrefix = "popforge"
+    [switch]$Public,
+    [string]$UserEmail = "37725632+popforge@users.noreply.github.com"
 )
 
 Set-StrictMode -Version Latest
@@ -37,74 +32,144 @@ $ErrorActionPreference = "Stop"
 
 function Write-Step { param([string]$Msg) Write-Host "  $Msg" -ForegroundColor Cyan }
 function Write-Ok   { param([string]$Msg) Write-Host "  v $Msg" -ForegroundColor Green }
-function Write-Skip { param([string]$Msg) Write-Host "  - $Msg" -ForegroundColor DarkGray }
+function Write-Warn { param([string]$Msg) Write-Host "  ! $Msg" -ForegroundColor Yellow }
 
 Write-Host ""
-Write-Host "=== Setup Git Popforge ===" -ForegroundColor Magenta
+Write-Host "=== Setup GitHub Personnel ===" -ForegroundColor Magenta
 
-# --- 1. Identite locale ---------------------------------------------------
-Write-Step "1. Identite git locale..."
-git config user.name  $UserName
-git config user.email $UserEmail
-Write-Ok "user.name  = $UserName"
-Write-Ok "user.email = $UserEmail"
-
-# --- 2. Branche principale ------------------------------------------------
-Write-Step "2. Branche principale..."
-$branch = git branch --show-current 2>$null
-if ($branch -eq "master") {
-    git branch -m master main
-    Write-Ok "Branche renommee : master -> main"
-    $remote = git remote get-url origin 2>$null
-    if ($remote) {
-        git push --set-upstream origin main
-        git push origin --delete master 2>$null
-        Write-Ok "Remote mis a jour : master supprime, main pousse"
-    }
-} else {
-    Write-Skip "Branche courante : $branch (rien a faire)"
+# --- 0. Pre-checks --------------------------------------------------------
+Write-Step "0. Verification des prerequis..."
+if (Test-Path ".git") {
+    throw "Ce dossier est deja un depot git. Le script attend un dossier non initialise."
+}
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    throw "git introuvable."
+}
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+    throw "gh introuvable."
 }
 
-# --- 3. URL remote pour GCM multi-comptes --------------------------------
-Write-Step "3. URL remote origin..."
-$url = git remote get-url origin 2>$null
-if ($url) {
-    if ($url -notmatch "^https://$GcmPrefix@") {
-        $newUrl = $url -replace "^https://github\.com/", "https://$GcmPrefix@github.com/"
-        git remote set-url origin $newUrl
-        Write-Ok "Remote URL : $newUrl"
-    } else {
-        Write-Skip "Remote URL deja correct : $url"
-    }
-} else {
-    Write-Skip "Aucun remote 'origin' configure (a ajouter apres 'git remote add origin <url>')"
+# --- 1. Compte GitHub -----------------------------------------------------
+Write-Step "1. Lecture du compte GitHub..."
+$ghLogin = (gh api user --jq ".login").Trim()
+$ghName = (gh api user --jq ".name").Trim()
+
+if (-not $ghLogin) {
+    throw "Impossible de lire le login GitHub via gh api user."
+}
+if ([string]::IsNullOrWhiteSpace($ghName) -or $ghName -eq "null") {
+    $ghName = $ghLogin
 }
 
-# --- 4. Installation des hooks git ----------------------------------------
-Write-Step "4. Hooks git..."
-$repoRoot    = git rev-parse --show-toplevel
+$expectedEmail = $UserEmail
+Write-Ok "Compte detecte : $ghLogin"
+Write-Ok "Email noreply attendu : $expectedEmail"
+
+# --- 2. Suggestions de noms ----------------------------------------------
+Write-Step "2. Proposition de noms de depot..."
+$folderName = Split-Path -Leaf (Get-Location)
+$base = $folderName.ToLowerInvariant()
+$base = $base -replace "^popforge\.", ""
+$base = $base -replace "[\._\s]+", "-"
+$base = $base -replace "[^a-z0-9\-]", ""
+$base = $base.Trim("-")
+
+if ([string]::IsNullOrWhiteSpace($base)) {
+    $base = "my-project"
+}
+
+$suggestions = @(
+    $base,
+    "my-$base",
+    "$base-app",
+    "$base-service"
+) | Select-Object -Unique
+
+Write-Host "  Choisis un nom :"
+for ($i = 0; $i -lt $suggestions.Count; $i++) {
+    Write-Host ("    [{0}] {1}" -f ($i + 1), $suggestions[$i])
+}
+Write-Host "    [0] Entrer un autre nom"
+
+$choice = Read-Host "  Ton choix"
+$repoName = $null
+
+if ($choice -match "^\d+$") {
+    $idx = [int]$choice
+    if ($idx -eq 0) {
+        $repoName = (Read-Host "  Nom personnalise").Trim().ToLowerInvariant()
+    } elseif ($idx -ge 1 -and $idx -le $suggestions.Count) {
+        $repoName = $suggestions[$idx - 1]
+    }
+}
+if ([string]::IsNullOrWhiteSpace($repoName)) {
+    throw "Choix invalide."
+}
+
+$repoName = ($repoName -replace "[\s_\.]+", "-") -replace "[^a-z0-9\-]", ""
+$repoName = $repoName.Trim("-")
+if ([string]::IsNullOrWhiteSpace($repoName)) {
+    throw "Nom de depot invalide."
+}
+
+$fullRepo = "$ghLogin/$repoName"
+Write-Ok "Depot cible : $fullRepo"
+
+# --- 3. Initialisation git locale ----------------------------------------
+Write-Step "3. Initialisation git locale..."
+git init | Out-Null
+git checkout -b main | Out-Null
+git config user.name $ghName
+git config user.email $expectedEmail
+git config hooks.expectedEmail $expectedEmail
+
+Write-Ok "Branche : main"
+Write-Ok "user.name  = $ghName"
+Write-Ok "user.email = $expectedEmail"
+
+# --- 4. Installation des hooks -------------------------------------------
+Write-Step "4. Installation des hooks..."
+$repoRoot = (git rev-parse --show-toplevel).Trim()
 $hooksSource = Join-Path $repoRoot ".githooks"
-$hooksDest   = Join-Path $repoRoot ".git" "hooks"
+$hooksDest = Join-Path $repoRoot ".git" "hooks"
 
 if (Test-Path $hooksSource) {
     Get-ChildItem $hooksSource -File | ForEach-Object {
-        $dest    = Join-Path $hooksDest $_.Name
-        # Convertir en LF et sans BOM (requis pour les scripts bash sur tous les OS)
+        $dest = Join-Path $hooksDest $_.Name
+        # LF + UTF-8 no BOM pour execution shell cross-platform.
         $content = (Get-Content $_.FullName -Raw) -replace "`r`n", "`n"
         $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
         [System.IO.File]::WriteAllText($dest, $content, $utf8NoBom)
         Write-Ok "Hook installe : $($_.Name)"
     }
 } else {
-    Write-Skip "Dossier .githooks introuvable — hooks non installes"
+    Write-Warn "Dossier .githooks absent. Aucun hook installe."
 }
+
+# --- 5. Commit initial ----------------------------------------------------
+Write-Step "5. Commit initial..."
+git add .
+$hasStaged = git diff --cached --name-only
+if (-not $hasStaged) {
+    Write-Warn "Aucun fichier a committer."
+} else {
+    git commit -m "Initial commit" | Out-Null
+    Write-Ok "Commit initial cree."
+}
+
+# --- 6. Creation du repo distant + push ----------------------------------
+Write-Step "6. Creation du depot distant..."
+$visibilityArg = if ($Public) { "--public" } else { "--private" }
+gh repo create $fullRepo $visibilityArg --source . --remote origin --push
+Write-Ok "Depot cree et push effectue."
 
 # --- Recapitulatif --------------------------------------------------------
 Write-Host ""
 Write-Host "  Configuration finale :" -ForegroundColor Magenta
+Write-Host "    compte     = $ghLogin"
+Write-Host "    repo       = https://github.com/$fullRepo"
 Write-Host "    user.name  = $(git config user.name)"
 Write-Host "    user.email = $(git config user.email)"
-$finalUrl = git remote get-url origin 2>$null
-Write-Host "    origin     = $($finalUrl ?? '(aucun)')"
+Write-Host "    origin     = $(git remote get-url origin)"
 Write-Host "    branche    = $(git branch --show-current)"
 Write-Host ""

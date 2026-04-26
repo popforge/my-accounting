@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PopSalon — UI Standards Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,900&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:           #090916;
+    --bg-card:      rgba(16,17,36,0.88);
+    --border:       rgba(255,255,255,0.08);
+    --border-input: rgba(255,255,255,0.12);
+    --border-card:  rgba(160,170,255,0.16);
+    --border-focus: rgba(217,70,239,0.65);
+    --text-1:       #f1f5f9;
+    --text-2:       #c4c4d8;
+    --text-muted:   #64748b;
+    --text-label:   #a0a0b8;
+    --grad-btn:     linear-gradient(135deg, #6d28d9, #c026d3);
+    --grad-text:    linear-gradient(90deg, #a855f7, #f97316);
+    --grad-text2:   linear-gradient(90deg, #a855f7, #ec4899);
+    --input-bg:     rgba(255,255,255,0.04);
+    --error:        #f87171;
+    --r-md:         10px;
+    --r-lg:         16px;
+    --r-xl:         20px;
+  }
+
+  html, body {
+    min-height: 100vh;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    overflow-x: hidden;
+  }
+
+  .page { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+  /* ── Header ── */
+  .page-title {
+    font-size: 2rem; font-weight: 900; letter-spacing: -0.03em;
+    background: var(--grad-btn); -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 0.25rem;
+  }
+  .page-sub { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 3rem; }
+
+  /* ── Section ── */
+  .section { margin-bottom: 3rem; }
+  .section-title {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 1rem;
+    padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+
+  /* ── Color swatches ── */
+  .swatch-grid { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .swatch {
+    display: flex; flex-direction: column; gap: 0.375rem;
+    min-width: 120px;
+  }
+  .swatch-box {
+    width: 100%; height: 52px; border-radius: var(--r-md);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .swatch-name { font-size: 0.7rem; color: var(--text-muted); font-family: monospace; }
+  .swatch-val { font-size: 0.7rem; color: var(--text-2); font-family: monospace; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--r-xl);
+    padding: 2rem 1.5rem;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 30px 90px rgba(0,0,0,.48), 0 0 45px rgba(192,38,211,.10);
+  }
+  .card-sm { max-width: 370px; }
+  .card-md { max-width: 460px; }
+
+  /* ── Typography ── */
+  .type-h1 { font-size: 1.625rem; font-weight: 700; color: var(--text-1); }
+  .type-h2 { font-size: 1.25rem; font-weight: 700; color: var(--text-1); }
+  .type-body { font-size: 0.9375rem; color: var(--text-2); line-height: 1.6; }
+  .type-small { font-size: 0.8125rem; color: var(--text-muted); }
+  .type-label { font-size: 0.8125rem; font-weight: 500; color: var(--text-label); }
+  .type-grad {
+    background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-weight: 700;
+  }
+  .type-grad2 {
+    background: var(--grad-text2); -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-weight: 700;
+  }
+
+  /* ── Form elements ── */
+  .fgrp { margin-bottom: 1rem; }
+  .flabel { display: block; font-size: 0.8125rem; font-weight: 500; color: var(--text-label); margin-bottom: 0.375rem; }
+  .iwrap { position: relative; display: flex; align-items: center; }
+  .iico { position: absolute; left: 0.875rem; color: var(--text-muted); display: flex; align-items: center; pointer-events: none; }
+  .finput {
+    width: 100%;
+    padding: 0.6875rem 2.75rem 0.6875rem 2.625rem;
+    background: rgba(255,255,255,.045);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: var(--r-md);
+    font-size: 1rem; font-family: inherit; color: var(--text-1);
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .finput::placeholder { color: var(--text-muted); }
+  .finput:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(217,70,239,.12); }
+  .finput-demo { background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.12); border-radius: var(--r-md); padding: 0.6875rem 1rem; font-size: 1rem; color: var(--text-muted); width: 100%; }
+  .finput-focus { background: rgba(255,255,255,.045); border: 1px solid rgba(217,70,239,.65); border-radius: var(--r-md); padding: 0.6875rem 1rem; font-size: 1rem; color: var(--text-1); width: 100%; box-shadow: 0 0 0 3px rgba(217,70,239,.12); }
+  .finput-error { background: rgba(248,113,113,.04); border: 1px solid rgba(248,113,113,.4); border-radius: var(--r-md); padding: 0.6875rem 1rem; font-size: 1rem; color: var(--text-1); width: 100%; }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    padding: 0.75rem 1.5rem;
+    background: var(--grad-btn);
+    color: white; border: none; border-radius: var(--r-md);
+    font-size: 1rem; font-weight: 700; font-family: inherit;
+    cursor: pointer; letter-spacing: .01em;
+    box-shadow: 0 4px 20px rgba(109,40,217,.4);
+    transition: opacity .2s, box-shadow .2s;
+  }
+  .btn-primary:hover { opacity: .9; box-shadow: 0 6px 28px rgba(192,38,211,.48); }
+  .btn-secondary {
+    padding: 0.625rem 1.5rem;
+    background: rgba(255,255,255,.04);
+    color: var(--text-2); border: 1px solid var(--border-input); border-radius: var(--r-md);
+    font-size: 0.875rem; font-weight: 500; font-family: inherit; cursor: pointer;
+    transition: opacity .2s, border-color .2s;
+  }
+  .btn-secondary:hover { opacity: .75; border-color: rgba(255,255,255,.2); }
+  .btn-full { width: 100%; }
+
+  /* ── Social buttons ── */
+  .social-btns { display: flex; gap: 0.625rem; }
+  .social-btn {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center; gap: 0.375rem;
+    padding: 0.625rem;
+    background: var(--input-bg); border: 1px solid var(--border-input); border-radius: var(--r-md);
+    font-size: 0.8125rem; font-weight: 500; font-family: inherit; color: var(--text-2);
+    cursor: pointer; transition: opacity .2s, border-color .2s;
+  }
+  .social-btn:hover { opacity: .75; }
+
+  /* ── Error box ── */
+  .error-box {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.22);
+    border-radius: var(--r-md); padding: 0.625rem 0.875rem;
+    font-size: 0.8125rem; color: var(--error);
+  }
+
+  /* ── Separator ── */
+  .sep { display: flex; align-items: center; gap: 0.75rem; margin: 1rem 0; }
+  .sep-line { flex: 1; height: 1px; background: var(--border); }
+  .sep-txt { font-size: 0.8125rem; color: var(--text-muted); }
+
+  /* ── Deco line ── */
+  .deco-line { width: 140px; height: 18px; margin: 10px auto; position: relative; }
+  .deco-line::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px;
+    transform: translateY(-50%);
+    background: linear-gradient(90deg, transparent, #8b4dff, #ff3fb7, #ff9b2f, #22c8ff, transparent);
+    filter: blur(0.2px); opacity: 0.85;
+  }
+  .deco-line::after {
+    content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px;
+    transform: translate(-50%, -50%) rotate(45deg); background: #ffb13b;
+    box-shadow: 0 0 10px #ff9b2f, 0 0 18px #ff3fb7, 0 0 26px #22c8ff;
+  }
+
+  /* ── Checkbox ── */
+  .cb-wrap { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+  .cb-wrap input[type="checkbox"] {
+    appearance: none; -webkit-appearance: none; width: 16px; height: 16px;
+    border: 1.5px solid rgba(255,255,255,.2); border-radius: 4px; background: var(--input-bg);
+    cursor: pointer; position: relative; flex-shrink: 0;
+  }
+  .cb-wrap input[type="checkbox"]:checked { background: #7c3aed; border-color: #7c3aed; }
+  .cb-wrap input[type="checkbox"]:checked::after {
+    content: ''; position: absolute; left: 4px; top: 1.5px; width: 5px; height: 9px;
+    border: 2px solid white; border-top: none; border-left: none; transform: rotate(45deg);
+  }
+  .cb-label { font-size: 0.8125rem; color: var(--text-2); user-select: none; }
+
+  /* ── Breakpoints badge ── */
+  .bp-grid { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .bp-badge {
+    padding: 0.5rem 1rem; border-radius: var(--r-md);
+    background: rgba(255,255,255,.04); border: 1px solid var(--border-input);
+    font-size: 0.8125rem; color: var(--text-2);
+  }
+  .bp-badge strong { display: block; color: var(--text-1); font-weight: 600; }
+
+  /* ── Logo zone ── */
+  .logo-wrap {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 72px; height: 72px;
+    filter: drop-shadow(0 0 22px rgba(192,38,211,.55));
+  }
+  .logo-wrap img { width: 72px; height: 72px; }
+
+  /* ── Aurora preview ── */
+  .aurora-preview {
+    position: relative; height: 120px; border-radius: var(--r-xl);
+    overflow: hidden; background: var(--bg); border: 1px solid var(--border);
+  }
+  .ab { position: absolute; border-radius: 50%; filter: blur(60px); }
+  .ab-purple { width: 220px; height: 220px; background: radial-gradient(ellipse, rgba(109,40,217,.65) 0%, transparent 70%); top: -80px; left: -40px; }
+  .ab-pink   { width: 180px; height: 200px; background: radial-gradient(ellipse, rgba(192,38,211,.55) 0%, transparent 70%); top: -60px; right: -40px; }
+  .ab-orange { width: 200px; height: 120px; background: radial-gradient(ellipse, rgba(249,115,22,.42) 0%, transparent 70%); bottom: -40px; left: 20%; }
+  .ab-blue   { width: 160px; height: 200px; background: radial-gradient(ellipse, rgba(59,130,246,.38) 0%, transparent 70%); bottom: -60px; right: 10%; }
+
+  /* ── Demo login card ── */
+  .login-demo { max-width: 370px; }
+  .brand { text-align: center; margin-bottom: 1.5rem; }
+  .brand-title { font-size: 1.5rem; font-weight: 700; color: var(--text-1); margin-bottom: 0.2rem; }
+  .brand-sub { font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+  .card-footer { text-align: center; border-top: 1px solid var(--border); padding-top: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.5rem; }
+  .footer-brand { font-size: 0.8rem; color: var(--text-muted); }
+  .footer-signup { font-size: 0.8rem; color: var(--text-muted); }
+  .footer-signup a { background: var(--grad-text2); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 700; text-decoration: none; }
+  .extras-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 1.25rem; }
+  .forgot-link { font-size: 0.8125rem; font-weight: 600; background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent; text-decoration: none; }
+
+  /* SVG icons inline */
+  .iico svg { width: 16px; height: 16px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1 class="page-title">PopSalon — UI Standards</h1>
+  <p class="page-sub">Référence visuelle des composants. Mobile-first · Avril 2026</p>
+
+  <!-- ── BREAKPOINTS ── -->
+  <section class="section">
+    <div class="section-title">Breakpoints supportés</div>
+    <div class="bp-grid">
+      <div class="bp-badge"><strong>375px</strong>iPhone SE</div>
+      <div class="bp-badge"><strong>390px</strong>iPhone 12/13/14 Pro</div>
+      <div class="bp-badge"><strong>412px</strong>Samsung Galaxy A51/71</div>
+      <div class="bp-badge"><strong>768px</strong>iPad Mini</div>
+      <div class="bp-badge"><strong>≥960px</strong>Desktop</div>
+    </div>
+  </section>
+
+  <!-- ── COULEURS ── -->
+  <section class="section">
+    <div class="section-title">Palette de couleurs</div>
+    <div class="swatch-grid">
+      <div class="swatch">
+        <div class="swatch-box" style="background:#090916"></div>
+        <div class="swatch-name">--bg</div>
+        <div class="swatch-val">#090916</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-box" style="background:rgba(16,17,36,0.88);border:1px solid rgba(160,170,255,.16)"></div>
+        <div class="swatch-name">--bg-card</div>
+        <div class="swatch-val">rgba(16,17,36,.88)</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-box" style="background:linear-gradient(135deg,#6d28d9,#c026d3)"></div>
+        <div class="swatch-name">--grad-btn</div>
+        <div class="swatch-val">#6d28d9 → #c026d3</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-box" style="background:linear-gradient(90deg,#a855f7,#f97316)"></div>
+        <div class="swatch-name">--grad-text</div>
+        <div class="swatch-val">#a855f7 → #f97316</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-box" style="background:linear-gradient(90deg,#a855f7,#ec4899)"></div>
+        <div class="swatch-name">--grad-text2</div>
+        <div class="swatch-val">#a855f7 → #ec4899</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-box" style="background:#f1f5f9"></div>
+        <div class="swatch-name">--text-1</div>
+        <div class="swatch-val">#f1f5f9</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-box" style="background:#c4c4d8"></div>
+        <div class="swatch-name">--text-2</div>
+        <div class="swatch-val">#c4c4d8</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-box" style="background:#64748b"></div>
+        <div class="swatch-name">--text-muted</div>
+        <div class="swatch-val">#64748b</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-box" style="background:#f87171"></div>
+        <div class="swatch-name">--error</div>
+        <div class="swatch-val">#f87171</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TYPOGRAPHIE ── -->
+  <section class="section">
+    <div class="section-title">Typographie — DM Sans</div>
+    <div class="card" style="display:flex;flex-direction:column;gap:1rem;max-width:600px">
+      <div class="type-h1">H1 — Titre principal (1.625rem, 700)</div>
+      <div class="type-h2">H2 — Sous-titre (1.25rem, 700)</div>
+      <div class="type-body">Body — Texte courant (0.9375rem, 400). Gérez vos rendez-vous et votre équipe.</div>
+      <div class="type-small">Small — Texte discret (0.8125rem). Labels, notes de bas de page.</div>
+      <div class="type-label">Label de champ (0.8125rem, 500)</div>
+      <div><span class="type-grad">Gradient text 1 — violet → orange</span></div>
+      <div><span class="type-grad2">Gradient text 2 — violet → rose</span></div>
+    </div>
+  </section>
+
+  <!-- ── AURORA ── -->
+  <section class="section">
+    <div class="section-title">Fond Aurora (blobs animés)</div>
+    <div class="aurora-preview">
+      <div class="ab ab-purple"></div>
+      <div class="ab ab-pink"></div>
+      <div class="ab ab-orange"></div>
+      <div class="ab ab-blue"></div>
+    </div>
+  </section>
+
+  <!-- ── LIGNE DÉCO ── -->
+  <section class="section">
+    <div class="section-title">Ligne décorative (CSS pur)</div>
+    <div class="card" style="max-width:300px;display:flex;align-items:center;justify-content:center;padding:2rem">
+      <div class="deco-line"></div>
+    </div>
+  </section>
+
+  <!-- ── CHAMPS ── -->
+  <section class="section">
+    <div class="section-title">Champs de formulaire</div>
+    <div class="row">
+      <div style="flex:1;min-width:240px;max-width:400px;display:flex;flex-direction:column;gap:0.75rem">
+        <div>
+          <div class="flabel">État normal</div>
+          <div class="finput-demo">Placeholder</div>
+        </div>
+        <div>
+          <div class="flabel">Focus</div>
+          <div class="finput-focus">anne@salonmtl.com</div>
+        </div>
+        <div>
+          <div class="flabel">Erreur</div>
+          <div class="finput-error">mot de passe incorrect</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CHECKBOX ── -->
+  <section class="section">
+    <div class="section-title">Checkbox</div>
+    <div style="display:flex;flex-direction:column;gap:0.75rem">
+      <label class="cb-wrap">
+        <input type="checkbox" />
+        <span class="cb-label">Non coché</span>
+      </label>
+      <label class="cb-wrap">
+        <input type="checkbox" checked />
+        <span class="cb-label">Coché</span>
+      </label>
+    </div>
+  </section>
+
+  <!-- ── BOUTONS ── -->
+  <section class="section">
+    <div class="section-title">Boutons</div>
+    <div class="row" style="align-items:center">
+      <button class="btn-primary">Se connecter</button>
+      <button class="btn-secondary">Annuler</button>
+      <div style="width:280px">
+        <button class="btn-primary btn-full">Bouton pleine largeur</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SOCIAL ── -->
+  <section class="section">
+    <div class="section-title">Boutons sociaux</div>
+    <div style="max-width:380px">
+      <div class="social-btns">
+        <button class="social-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Google
+        </button>
+        <button class="social-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+          Apple
+        </button>
+        <button class="social-btn">
+          <svg width="16" height="16" viewBox="0 0 23 23"><path fill="#f3f3f3" d="M0 0h23v23H0z"/><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
+          Microsoft
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── MESSAGES ── -->
+  <section class="section">
+    <div class="section-title">Messages</div>
+    <div style="max-width:420px;display:flex;flex-direction:column;gap:0.75rem">
+      <div class="error-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Courriel ou mot de passe incorrect. Réessaie.
+      </div>
+      <div class="sep">
+        <div class="sep-line"></div>
+        <span class="sep-txt">ou</span>
+        <div class="sep-line"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CARD ── -->
+  <section class="section">
+    <div class="section-title">Card — Tailles (mobile 370px · desktop 460px)</div>
+    <div class="row">
+      <div>
+        <div class="type-small" style="margin-bottom:0.5rem">Mobile max-width: 370px</div>
+        <div class="card card-sm">
+          <p class="type-small">Contenu de la card mobile. Padding 2rem 1.25rem.</p>
+        </div>
+      </div>
+      <div>
+        <div class="type-small" style="margin-bottom:0.5rem">Desktop max-width: 460px</div>
+        <div class="card card-md">
+          <p class="type-small">Contenu de la card desktop. Padding 2.625rem 2.25rem.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── LOGIN COMPLET ── -->
+  <section class="section">
+    <div class="section-title">Formulaire de connexion complet (mobile)</div>
+    <div class="card login-demo">
+      <div class="brand">
+        <div class="logo-wrap">
+          <img src="Assets/cisors-icon-2-removebg-preview.png" alt="PopSalon"
+               onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\'width:72px;height:72px;background:linear-gradient(135deg,#6d28d9,#c026d3);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.5rem\'>✂️</div>'" />
+        </div>
+        <h1 class="brand-title">PopSalon</h1>
+        <p class="brand-sub">Connexion à votre espace</p>
+        <div class="deco-line"></div>
+      </div>
+
+      <div class="fgrp">
+        <label class="flabel">Courriel</label>
+        <div class="iwrap">
+          <span class="iico">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </span>
+          <input class="finput" type="email" placeholder="anne@salonmtl.com" />
+        </div>
+      </div>
+
+      <div class="fgrp">
+        <label class="flabel">Mot de passe</label>
+        <div class="iwrap">
+          <span class="iico">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input class="finput" type="password" placeholder="••••••••" />
+        </div>
+      </div>
+
+      <div class="extras-row">
+        <label class="cb-wrap">
+          <input type="checkbox" />
+          <span class="cb-label">Se souvenir de moi</span>
+        </label>
+        <a href="#" class="forgot-link">Mot de passe oublié ?</a>
+      </div>
+
+      <button class="btn-primary btn-full">Se connecter</button>
+
+      <div class="sep"><div class="sep-line"></div><span class="sep-txt">ou</span><div class="sep-line"></div></div>
+      <p style="text-align:center;font-size:0.8125rem;color:var(--text-muted);margin-bottom:0.75rem">Continuer avec</p>
+      <div class="social-btns" style="margin-bottom:1.5rem">
+        <button class="social-btn" style="font-size:0.75rem">
+          <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Google
+        </button>
+        <button class="social-btn" style="font-size:0.75rem">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+          Apple
+        </button>
+        <button class="social-btn" style="font-size:0.75rem">
+          <svg width="14" height="14" viewBox="0 0 23 23"><path fill="#f3f3f3" d="M0 0h23v23H0z"/><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
+          Microsoft
+        </button>
+      </div>
+
+      <div class="card-footer">
+        <p class="footer-brand">PopSalon · Propulsé par <img src="Assets/pop-forge-name-with-colors-transparent.png" alt="PopForge" style="height:22px;vertical-align:middle" onerror="this.outerHTML='<strong style=\'background:linear-gradient(90deg,#a855f7,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent\'>PopForge</strong>'" /></p>
+        <p class="footer-signup">Nouveau sur PopSalon ? <a href="#">Créer un compte</a></p>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
