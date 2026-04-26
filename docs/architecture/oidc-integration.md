@@ -2,13 +2,15 @@
 
 > Instructions pour implanter l'authentification déléguée à Popforge.Auth
 > dans ce cluster. À donner à l'IA pour qu'elle implante le code.
+>
+> Source : `Popforge.Shared/docs/oidc-cluster-integration.md` (template générique)
 
 ---
 
 ## Contexte
 
 Ce cluster (`my-accounting`) délègue l'authentification à **Popforge.Auth** (serveur OIDC OpenIddict).
-L'utilisateur est redirigé vers Auth pour se connecter, puis revient avec un token JWT.
+Le package `@popforge/cluster-core` (repo `Popforge.Shared`) fournit toute la mécanique OIDC.
 
 | Paramètre | Valeur |
 |---|---|
@@ -17,7 +19,6 @@ L'utilisateur est redirigé vers Auth pour se connecter, puis revient avec un to
 | Scopes | `openid email profile roles` |
 | Callback dev | `http://localhost:5175/auth/callback` |
 | Callback beta | `https://my-accounting-beta.popsalon.app/auth/callback` |
-| Post-logout dev | `http://localhost:5175/` |
 
 | Environnement | Authority |
 |---|---|
@@ -25,7 +26,7 @@ L'utilisateur est redirigé vers Auth pour se connecter, puis revient avec un to
 | Beta | `https://auth-beta.popsalon.app` |
 | Production | `https://auth.popsalon.app` |
 
-**Le client est déjà enregistré dans Popforge.Auth.** Aucune modification à faire dans ce repo.
+**Le client est déjà enregistré dans Popforge.Auth.** Aucune modification côté Auth.
 
 ---
 
@@ -33,82 +34,41 @@ L'utilisateur est redirigé vers Auth pour se connecter, puis revient avec un to
 
 La SPA se trouve dans `src/my-accounting/app/`.
 
-### 1.1 — Installer la dépendance
+### 1.1 — Configurer `.npmrc` à la racine du projet Vue
+
+```ini
+@popforge:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${NPM_TOKEN}
+```
+
+> `NPM_TOKEN` = PAT GitHub avec scope `read:packages`. À définir localement via
+> `$env:NPM_TOKEN = "ghp_..."` et dans les secrets GitHub CI.
+
+### 1.2 — Installer le package
 
 ```bash
-npm install oidc-client-ts
+npm install @popforge/cluster-core
 ```
 
-### 1.2 — Créer `src/auth/oidc.ts`
+### 1.3 — Initialiser OIDC dans `src/main.ts`
 
 ```typescript
-import { UserManager, WebStorageStateStore, type User } from 'oidc-client-ts'
+import { createOidcManager } from '@popforge/cluster-core'
 
-const config = {
-  authority: import.meta.env.VITE_OIDC_AUTHORITY as string,
-  client_id: import.meta.env.VITE_OIDC_CLIENT_ID as string,
-  redirect_uri: `${window.location.origin}/auth/callback`,
-  post_logout_redirect_uri: `${window.location.origin}/`,
-  response_type: 'code',
+createOidcManager({
+  authority: import.meta.env.VITE_OIDC_AUTHORITY,
+  clientId: import.meta.env.VITE_OIDC_CLIENT_ID,
   scope: 'openid email profile roles',
-  userStore: new WebStorageStateStore({ store: localStorage }),
-  automaticSilentRenew: true,
-}
-
-export const oidcManager = new UserManager(config)
-
-export async function getUser(): Promise<User | null> {
-  return oidcManager.getUser()
-}
-
-export async function login(): Promise<void> {
-  await oidcManager.signinRedirect()
-}
-
-export async function logout(): Promise<void> {
-  await oidcManager.signoutRedirect()
-}
-
-export async function getAccessToken(): Promise<string | null> {
-  const user = await oidcManager.getUser()
-  return user?.access_token ?? null
-}
-```
-
-### 1.3 — Créer `src/auth/AuthCallback.vue`
-
-```vue
-<script setup lang="ts">
-import { onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { oidcManager } from './oidc'
-
-const router = useRouter()
-
-onMounted(async () => {
-  try {
-    await oidcManager.signinRedirectCallback()
-    router.push('/')
-  } catch (e) {
-    console.error('OIDC callback error:', e)
-    router.push('/login-error')
-  }
 })
-</script>
 
-<template>
-  <div>Authentification en cours…</div>
-</template>
+// puis createApp(App).use(router)...
 ```
 
 ### 1.4 — Ajouter la route `/auth/callback` dans le router
 
-Dans `src/router/index.ts` (ou équivalent) :
-
 ```typescript
-import AuthCallback from '@/auth/AuthCallback.vue'
+import { AuthCallback } from '@popforge/cluster-core'
 
-// Dans les routes :
 {
   path: '/auth/callback',
   component: AuthCallback,
@@ -117,10 +77,8 @@ import AuthCallback from '@/auth/AuthCallback.vue'
 
 ### 1.5 — Guard de navigation
 
-Dans `src/router/index.ts`, après la définition des routes :
-
 ```typescript
-import { getUser, login } from '@/auth/oidc'
+import { getUser, login } from '@popforge/cluster-core'
 
 router.beforeEach(async (to) => {
   if (to.meta.requiresAuth) {
@@ -133,42 +91,38 @@ router.beforeEach(async (to) => {
 })
 ```
 
-Sur les routes protégées, ajouter `meta: { requiresAuth: true }`.
+Sur les routes protégées : `meta: { requiresAuth: true }`.
 
-### 1.6 — Variables d'environnement
+### 1.6 — Utiliser `useAuth` dans les composants
 
-Créer `.env.development` à la racine du projet Vue :
+```typescript
+import { useAuth } from '@popforge/cluster-core'
+
+const { isAuthenticated, profile, login, logout } = useAuth()
+```
+
+### 1.7 — Appels API authentifiés
+
+```typescript
+import { authFetch } from '@popforge/cluster-core'
+
+const data = await authFetch('/api/accounts').then(r => r.json())
+```
+
+### 1.8 — Variables d'environnement
+
+`.env.development` :
 
 ```dotenv
 VITE_OIDC_AUTHORITY=https://auth-beta.popsalon.app
 VITE_OIDC_CLIENT_ID=my-accounting-cluster
 ```
 
-Créer `.env.production` :
+`.env.production` :
 
 ```dotenv
 VITE_OIDC_AUTHORITY=https://auth.popsalon.app
 VITE_OIDC_CLIENT_ID=my-accounting-cluster
-```
-
-### 1.7 — Appels API authentifiés
-
-Créer `src/api/client.ts` :
-
-```typescript
-import { getAccessToken } from '@/auth/oidc'
-
-export async function authFetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
-  const token = await getAccessToken()
-  return fetch(input, {
-    ...init,
-    headers: {
-      ...init?.headers,
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'Content-Type': 'application/json',
-    },
-  })
-}
 ```
 
 ---
@@ -186,8 +140,6 @@ dotnet add package OpenIddict.Client.SystemNetHttp
 
 ### 2.2 — Configurer dans `Program.cs`
 
-Après `builder.Services.AddControllers()` :
-
 ```csharp
 builder.Services.AddOpenIddict()
     .AddValidation(options =>
@@ -203,45 +155,29 @@ builder.Services.AddAuthentication(OpenIddictValidationAspNetCoreDefaults.Authen
 builder.Services.AddAuthorization();
 ```
 
-Dans le pipeline HTTP, avant `app.MapControllers()` :
-
 ```csharp
 app.UseAuthentication();
 app.UseAuthorization();
 ```
 
-### 2.3 — `appsettings.json`
+### 2.3 — `appsettings.json` + `appsettings.Development.json`
 
 ```json
-{
-  "Oidc": {
-    "Authority": "https://auth.popsalon.app"
-  }
-}
+{ "Oidc": { "Authority": "https://auth.popsalon.app" } }
 ```
 
-`appsettings.Development.json` :
-
 ```json
-{
-  "Oidc": {
-    "Authority": "https://auth-beta.popsalon.app"
-  }
-}
+{ "Oidc": { "Authority": "https://auth-beta.popsalon.app" } }
 ```
 
 ### 2.4 — Protéger les controllers
 
 ```csharp
-using Microsoft.AspNetCore.Authorization;
-using OpenIddict.Validation.AspNetCore;
-
 [Authorize(AuthenticationSchemes = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)]
 [ApiController]
 [Route("api/[controller]")]
 public class AccountsController : ControllerBase
 {
-    // Identité de l'utilisateur connecté :
     // var userId = User.FindFirst(OpenIddictConstants.Claims.Subject)?.Value;
     // var email  = User.FindFirst(OpenIddictConstants.Claims.Email)?.Value;
 }
@@ -249,26 +185,23 @@ public class AccountsController : ControllerBase
 
 ### 2.5 — Variable d'environnement Docker
 
-Dans `docker-compose.deploy.yml`, section `environment` du service API :
-
 ```yaml
 - Oidc__Authority=https://auth-beta.popsalon.app
 ```
-
-En production : `https://auth.popsalon.app`.
 
 ---
 
 ## Checklist d'implantation
 
 ### Frontend (`src/my-accounting/app/`)
-- [ ] `oidc-client-ts` ajouté dans `package.json`
-- [ ] `src/auth/oidc.ts` créé
-- [ ] `src/auth/AuthCallback.vue` créé
-- [ ] Route `/auth/callback` ajoutée dans le router
+- [ ] `.npmrc` configuré avec `@popforge:registry`
+- [ ] `@popforge/cluster-core` installé
+- [ ] `createOidcManager()` appelé dans `main.ts`
+- [ ] Route `/auth/callback` avec `AuthCallback` ajoutée dans le router
 - [ ] Guard `router.beforeEach` ajouté
 - [ ] `.env.development` et `.env.production` créés
-- [ ] Appels API utilisent `authFetch` avec `Authorization: Bearer <token>`
+- [ ] Appels API utilisent `authFetch()`
+- [ ] `NPM_TOKEN` configuré dans les secrets GitHub CI
 
 ### Backend (`src/my-accounting/server/MyAccounting.Server/`)
 - [ ] Packages `OpenIddict.AspNetCore` et `OpenIddict.Client.SystemNetHttp` ajoutés
