@@ -22,9 +22,9 @@ Permettre a Rachel de photographier un document depuis l'application mobile et d
    *Type de test : Manuel*
 
 ## Stories de l'epic
-- [Story 1.0 - Capture mobile et stockage iCloud rapide](./story-1-0-capture-mobile-et-stockage-icloud.md)
-- [Story 1.1 - Classement iCloud et recherche multi-critères](./story-1-1-classement-icloud-et-recherche-multi-critères.md)
-- [Story 1.2 - Import des documents existants iCloud](./story-1-2-import-documents-existants-icloud.md)
+- [Story 1.0 - Classement iCloud et recherche multi-critères](./story-1-0-classement-icloud-et-recherche-multi-criteres.md)
+- [Story 1.1 - Import des documents existants iCloud](./story-1-1-import-documents-existants-icloud.md)
+- [Story 1.2 - Capture mobile et stockage iCloud rapide](./story-1-2-capture-mobile-et-stockage-icloud.md)
 
 ## Sources
 - [Product Brief](../../product-brief-Comptabilité-personnelle.md)

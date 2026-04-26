@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "./.bddgen",
+    "paths": {
+      "@support/*": ["./support/*"],
+      "@fixtures/*": ["./support/fixtures/*"],
+      "@pages/*": ["./support/pages/*"],
+      "@helpers/*": ["./support/helpers/*"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "exclude": [".bddgen", "node_modules"]
+}

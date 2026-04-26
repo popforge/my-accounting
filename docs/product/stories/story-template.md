@@ -37,6 +37,12 @@ Voir : `src/{ClusterName}/tests/e2e/features/[feature-file].feature`
 
 ---
 
+## UI-UX — Maquettes et prototypes
+
+> créer une maquette ici proposée en ASCII pour chaque écran ou interaction clé, ou pointer vers un prototype Figma/html sous `docs/product/ui-ux/maquettes`.
+
+---
+
 ## Artefacts techniques
 
 | Type | Chemin | Action |

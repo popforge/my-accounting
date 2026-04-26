@@ -1,6 +1,8 @@
-# Story 1.0 - Capture mobile et stockage iCloud rapide
+# Story 1.2 - Capture mobile et stockage iCloud rapide
 
 **Statut :** `backlog`
+
+**Dépend de :** [Story 1.0 - Classement iCloud et recherche multi-critères](./story-1-0-classement-icloud-et-recherche-multi-criteres.md) — le schéma de classement et l'index PostgreSQL doivent exister avant la capture.
 
 En tant que Rachel, je veux photographier un document depuis l'application mobile et le stocker en quelques operations dans iCloud afin de ne pas accumuler de papier et de retrouver facilement mes pieces plus tard.
 
@@ -36,7 +38,7 @@ flowchart TD
 > Les Scénarios Gherkin sont la source de vérité et vivent dans le fichier `.feature` correspondant.
 > Ne pas les dupliquer ici - pointer vers le fichier.
 
-Voir : `src/accounting/tests/e2e/features/document-capture-mobile-icloud.feature`
+Voir : `src/my-accounting/tests/e2e/features/document-capture-mobile-icloud.feature`
 
 ---
 
@@ -44,11 +46,11 @@ Voir : `src/accounting/tests/e2e/features/document-capture-mobile-icloud.feature
 
 | Type | Chemin | Action |
 |------|--------|--------|
-| Feature Gherkin | `src/accounting/tests/e2e/features/document-capture-mobile-icloud.feature` | Creer |
-| Ecran mobile | `src/accounting/client/mobile/document-capture/DocumentCapturePage.vue` | Creer |
-| Formulaire classement | `src/accounting/client/mobile/document-capture/components/DocumentClassificationForm.vue` | Creer |
-| Service iCloud | `src/accounting/client/mobile/document-capture/services/iCloudStorageService.ts` | Creer |
-| Ecran recherche documents | `src/accounting/client/mobile/documents/DocumentSearchPage.vue` | Creer |
+| Feature Gherkin | `src/my-accounting/tests/e2e/features/document-capture-mobile-icloud.feature` | Creer |
+| Ecran mobile | `src/my-accounting/app/src/capture/DocumentCapturePage.vue` | Creer |
+| Formulaire classement | `src/my-accounting/app/src/capture/components/DocumentClassificationForm.vue` | Creer |
+| Service iCloud | `src/my-accounting/app/src/capture/services/iCloudStorageService.ts` | Creer |
+| Ecran recherche documents | `src/my-accounting/app/src/documents/DocumentSearchPage.vue` | Creer |
 
 ---
 

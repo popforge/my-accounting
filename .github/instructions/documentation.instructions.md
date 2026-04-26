@@ -8,6 +8,7 @@ Prefer brief, clear, and concise content with bullet points or checklists where 
 
 - Naming convention kebab-case mandatory.
 - Prefer lowercase. Can be overruled by readability concerns (e.g., `ADR-001-template.md`).
+- Always write in french with accents.
 
 Folder hierachy :
 

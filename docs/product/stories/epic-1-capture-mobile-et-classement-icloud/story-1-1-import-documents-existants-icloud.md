@@ -1,6 +1,8 @@
-# Story 1.2 - Import des documents existants iCloud
+# Story 1.1 - Import des documents existants iCloud
 
 **Statut :** `backlog`
+
+**Dépend de :** [Story 1.0 - Classement iCloud et recherche multi-critères](./story-1-0-classement-icloud-et-recherche-multi-criteres.md) — le service `documentClassificationRules.ts` et le schéma d'index PostgreSQL doivent exister avant l'import.
 
 En tant que Rachel, je veux que l application prenne en compte les documents déjà presents dans mon iCloud et les importe dans mon espace de travail afin de conserver mon historique sans recommencer tout le classement à zéro.
 
@@ -42,7 +44,7 @@ flowchart TD
 > Les Scénarios Gherkin sont la source de vérité et vivent dans le fichier `.feature` correspondant.
 > Ne pas les dupliquer ici - pointer vers le fichier.
 
-Voir : `src/accounting/tests/e2e/features/document-import-icloud-existant.feature`
+Voir : `src/my-accounting/tests/e2e/features/document-import-icloud-existant.feature`
 
 ---
 
@@ -50,11 +52,11 @@ Voir : `src/accounting/tests/e2e/features/document-import-icloud-existant.featur
 
 | Type | Chemin | Action |
 |------|--------|--------|
-| Feature Gherkin | `src/accounting/tests/e2e/features/document-import-icloud-existant.feature` | Creer |
-| Service import iCloud | `src/accounting/client/mobile/documents/services/iCloudImportService.ts` | Creer |
-| Parseur nom de fichier | `src/accounting/client/mobile/documents/services/documentFilenameParser.ts` | Creer |
-| Ecran import iCloud | `src/accounting/client/mobile/documents/DocumentImportICloudPage.vue` | Creer |
-| Store documents | `src/accounting/client/mobile/documents/stores/useDocumentStore.ts` | Modifier |
+| Feature Gherkin | `src/my-accounting/tests/e2e/features/document-import-icloud-existant.feature` | Creer |
+| Service import iCloud | `src/my-accounting/app/src/documents/services/iCloudImportService.ts` | Creer |
+| Parseur nom de fichier | `src/my-accounting/app/src/documents/services/documentFilenameParser.ts` | Creer |
+| Ecran import iCloud | `src/my-accounting/app/src/documents/DocumentImportICloudPage.vue` | Creer |
+| Store documents | `src/my-accounting/app/src/documents/stores/useDocumentStore.ts` | Modifier |
 
 ---
 
