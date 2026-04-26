@@ -1,0 +1,15 @@
+services:
+  my-accounting-api:
+    image: ghcr.io/popforge/my-accounting-api:${MY_ACCOUNTING_API_TAG:?MY_ACCOUNTING_API_TAG is required}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${MY_ACCOUNTING_ASPNETCORE_ENVIRONMENT:-Beta}
+      ConnectionStrings__AppDb: ${MY_ACCOUNTING_DB_CONNECTION:?MY_ACCOUNTING_DB_CONNECTION is required}
+    ports:
+      - "${MY_ACCOUNTING_HOST_BIND:-127.0.0.1}:${MY_ACCOUNTING_API_PORT:-8095}:8080"
+
+  my-accounting-app:
+    image: ghcr.io/popforge/my-accounting-app:${MY_ACCOUNTING_APP_TAG:?MY_ACCOUNTING_APP_TAG is required}
+    restart: unless-stopped
+    ports:
+      - "${MY_ACCOUNTING_HOST_BIND:-127.0.0.1}:${MY_ACCOUNTING_APP_PORT:-8096}:80"

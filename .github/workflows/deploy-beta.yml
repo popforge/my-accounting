@@ -1,0 +1,93 @@
+name: Deploy MyAccounting to Beta
+
+on:
+  workflow_run:
+    workflows: ["Publish MyAccounting Images"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: beta
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download image tags artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: image-tags
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Load image tags
+        id: tags
+        shell: bash
+        run: |
+          sed 's/^[[:space:]]*//' image-tags.env > image-tags-clean.env
+          source ./image-tags-clean.env
+          echo "api_tag=${MY_ACCOUNTING_API_TAG}" >> "${GITHUB_OUTPUT}"
+          echo "app_tag=${MY_ACCOUNTING_APP_TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Validate image tags
+        shell: bash
+        run: |
+          for tag in "${{ steps.tags.outputs.api_tag }}" "${{ steps.tags.outputs.app_tag }}"; do
+            if [[ ! "$tag" =~ ^(main|sha)-[0-9a-f]{7,40}$ && ! "$tag" =~ ^v[0-9]+(\.[0-9]+){1,2}([-.][0-9A-Za-z.-]+)?$ ]]; then
+              echo "Invalid image tag: ${tag}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Create deploy.env payload
+        shell: bash
+        run: |
+          cat > deploy.env <<EOF
+          MY_ACCOUNTING_API_TAG=${{ steps.tags.outputs.api_tag }}
+          MY_ACCOUNTING_APP_TAG=${{ steps.tags.outputs.app_tag }}
+          MY_ACCOUNTING_HOST_BIND=127.0.0.1
+          MY_ACCOUNTING_API_PORT=8095
+          MY_ACCOUNTING_APP_PORT=8096
+          MY_ACCOUNTING_ASPNETCORE_ENVIRONMENT=Beta
+          MY_ACCOUNTING_DB_CONNECTION=${{ secrets.MY_ACCOUNTING_DB_CONNECTION }}
+          EOF
+          sed -i 's/^[[:space:]]*//' deploy.env
+
+      - name: Ensure remote deploy path exists
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ vars.ORACLE_SSH_HOST }}
+          username: ${{ vars.ORACLE_SSH_USERNAME }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: sudo mkdir -p /opt/my-accounting && sudo chown ubuntu:ubuntu /opt/my-accounting
+
+      - name: Copy deployment manifest
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ vars.ORACLE_SSH_HOST }}
+          username: ${{ vars.ORACLE_SSH_USERNAME }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          source: docker-compose.deploy.yml,deploy.env
+          target: /opt/my-accounting
+          strip_components: 0
+
+      - name: Pull and start pinned images
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ vars.ORACLE_SSH_HOST }}
+          username: ${{ vars.ORACLE_SSH_USERNAME }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          command_timeout: 15m
+          script: |
+            cd /opt/my-accounting
+            echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ vars.GHCR_READ_USERNAME }}" --password-stdin
+            docker compose -f docker-compose.deploy.yml --env-file deploy.env pull
+            docker compose -f docker-compose.deploy.yml --env-file deploy.env up -d
+            docker image prune -f
