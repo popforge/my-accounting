@@ -1,5 +1,10 @@
 // Story 0.0 - Integration OIDC et deploiement initial
 // AC : API protegee cote serveur - retourne 401 sans token
+//
+// Note : Ce test utilise WebApplicationFactory directement (pas ClusterWebApplicationFactory)
+// car il valide le comportement réel du middleware JWT (pas de token = 401).
+// ClusterWebApplicationFactory (TestJwtHandler) est réservé aux tests d'endpoints
+// protégés qui nécessitent un utilisateur simulé authentifié.
 
 using System.Net;
 using FluentAssertions;

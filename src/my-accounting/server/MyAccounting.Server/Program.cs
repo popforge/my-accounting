@@ -1,51 +1,26 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Popforge.AspNetCore.Extensions.Authentication;
+using Popforge.AspNetCore.Extensions.Cors;
+using Popforge.AspNetCore.Extensions.HealthChecks;
+using Popforge.AspNetCore.Extensions.Middleware;
+using Popforge.AspNetCore.Extensions.OpenApi;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddClusterAuthentication();
+builder.AddClusterOpenApi("MyAccounting API", "v1");
+builder.AddClusterHealth();
+builder.AddClusterCors();
 builder.Services.AddControllers();
-
-builder.Services.AddOpenApi();
-
-builder.Services.AddHealthChecks();
-
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyHeader()
-              .AllowAnyMethod());
-});
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.Authority = builder.Configuration["Oidc:Authority"];
-        options.TokenValidationParameters.ValidateAudience = false;
-    });
-builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-});
-
-app.MapOpenApi();
-app.UseSwaggerUI(c =>
-{
-    c.SwaggerEndpoint("/openapi/v1.json", "MyAccounting API v1");
-    c.RoutePrefix = "api-docs";
-});
-
-app.UseCors();
+app.UseClusterMiddleware();
+app.UseCors(ClusterCorsExtensions.PolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseClusterOpenApiUi();
 app.MapHealthChecks("/health").AllowAnonymous();
 app.MapControllers();
 

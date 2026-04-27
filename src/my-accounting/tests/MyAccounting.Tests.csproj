@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\server\MyAccounting.Server\MyAccounting.Server.csproj" />
+    <ProjectReference Include="..\..\..\..\Popforge.Shared\packages\dotnet\Popforge.Testing\Popforge.Testing.csproj" />
   </ItemGroup>
 
 </Project>

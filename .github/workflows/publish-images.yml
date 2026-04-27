@@ -1,4 +1,4 @@
-﻿name: Publish MyAccounting Images
+name: Publish MyAccounting Images
 
 on:
   push:
@@ -8,88 +8,23 @@ on:
       - 'v*'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: write
+# L'artifact uploadé par le reusable s'appelle "image-tags" (contenu : image-tags.env).
+# Il est téléchargé par deploy-beta.yml → job prepare-deploy sous ce même nom.
+#
+# Note : le reusable injecte secrets.GITHUB_TOKEN comme npm_token (BuildKit secret),
+# et non secrets.NPM_TOKEN. Fonctionne si le registre npm est GitHub Packages (ghcr.io).
+# Si un vrai token npmjs.com est requis, adapter le reusable ou migrer vers npm_token_as_build_arg.
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Compute image tags
-        id: tags
-        shell: bash
-        run: |
-          owner="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
-          api_image="ghcr.io/${owner}/my-accounting-api"
-          app_image="ghcr.io/${owner}/my-accounting-app"
-          short_sha="${GITHUB_SHA::12}"
-
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            version_tag="${GITHUB_REF_NAME}"
-          elif [[ "${GITHUB_REF_NAME}" == "main" ]]; then
-            version_tag="main-${short_sha}"
-          else
-            version_tag="manual-${short_sha}"
-          fi
-
-          {
-            echo "api_tags<<EOF"
-            echo "${api_image}:sha-${short_sha}"
-            echo "${api_image}:${version_tag}"
-            echo "EOF"
-            echo "app_tags<<EOF"
-            echo "${app_image}:sha-${short_sha}"
-            echo "${app_image}:${version_tag}"
-            echo "EOF"
-            echo "labels<<EOF"
-            echo "org.opencontainers.image.source=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
-            echo "org.opencontainers.image.revision=${GITHUB_SHA}"
-            echo "EOF"
-          } >> "${GITHUB_OUTPUT}"
-
-          {
-            echo "API_TAG=sha-${short_sha}"
-            echo "APP_TAG=sha-${short_sha}"
-          } > image-tags.env
-
-      - name: Build and push API
-        uses: docker/build-push-action@v6
-        with:
-          context: ./src/my-accounting/server/MyAccounting.Server
-          file: ./src/my-accounting/server/MyAccounting.Server/Dockerfile
-          push: true
-          tags: ${{ steps.tags.outputs.api_tags }}
-          labels: ${{ steps.tags.outputs.labels }}
-
-      - name: Build and push App
-        uses: docker/build-push-action@v6
-        with:
-          context: ./src/my-accounting/app
-          file: ./src/my-accounting/app/Dockerfile
-          push: true
-          tags: ${{ steps.tags.outputs.app_tags }}
-          labels: ${{ steps.tags.outputs.labels }}
-          secrets: |
-            npm_token=${{ secrets.NPM_TOKEN }}
-
-      - name: Upload image tags artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: image-tags
-          path: image-tags.env
-          retention-days: 1
+    uses: popforge/Popforge.Shared/.github/workflows/reusable-publish-images.yml@main
+    with:
+      api_image_name: my-accounting-api
+      api_dockerfile: ./src/my-accounting/server/MyAccounting.Server/Dockerfile
+      api_context: ./src/my-accounting/server/MyAccounting.Server
+      app_image_name: my-accounting-app
+      app_dockerfile: ./src/my-accounting/app/Dockerfile
+      app_context: ./src/my-accounting/app
+      # Le Dockerfile app utilise RUN --mount=type=secret,id=npm_token (BuildKit secret)
+      npm_token_as_secret: true
+    secrets: inherit

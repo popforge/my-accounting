@@ -8,7 +8,7 @@ RUN --mount=type=secret,id=npm_token \
 COPY . .
 RUN npm run build
 
-FROM nginx:alpine AS final
+# Hérite de ghcr.io/popforge/base-nginx — voir Popforge.Shared/docker/base-nginx/
+FROM ghcr.io/popforge/base-nginx:latest AS final
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80

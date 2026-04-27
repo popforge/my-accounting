@@ -1,4 +1,4 @@
-﻿name: Deploy MyAccounting to Beta
+name: Deploy MyAccounting to Beta
 
 on:
   workflow_run:
@@ -71,80 +71,19 @@ jobs:
           path: deploy.env
           retention-days: 1
 
+  # Job délégué au reusable Shared (appleboy/ssh-action + scp-action).
+  # L'artifact "deploy-env-files" (uploadé par prepare-deploy) est téléchargé
+  # automatiquement par le reusable (valeur par défaut de deploy_env_artifact_name).
+  # working_directory préserve le chemin /home/{user}/my-accounting de l'ancien job.
   deploy:
     needs: prepare-deploy
-    runs-on: ubuntu-latest
-    environment: beta
-    env:
-      DEPLOY_PATH: /home/${{ vars.ORACLE_SSH_USERNAME }}/my-accounting
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download deploy.env artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: deploy-env-files
-
-      - name: Configure SSH key
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          printf '%s\n' "${{ secrets.ORACLE_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -T 5 -H "${{ vars.ORACLE_SSH_HOST }}" >> ~/.ssh/known_hosts || true
-          chmod 600 ~/.ssh/known_hosts
-
-      - name: Precheck SSH TCP reachability
-        shell: bash
-        run: |
-          set -euo pipefail
-          host="${{ vars.ORACLE_SSH_HOST }}"
-          if [ -z "${host}" ]; then
-            echo "ORACLE_SSH_HOST is empty." >&2
-            exit 1
-          fi
-          nc -zvw5 "${host}" 22
-
-      - name: Ensure remote deploy path exists
-        shell: bash
-        run: |
-          set -euo pipefail
-          ssh \
-            -o BatchMode=yes \
-            -o ConnectTimeout=12 \
-            -o ServerAliveInterval=5 \
-            -o ServerAliveCountMax=3 \
-            -i ~/.ssh/id_ed25519 \
-            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}" \
-            "mkdir -p '${{ env.DEPLOY_PATH }}'"
-
-      - name: Copy deployment manifest
-        shell: bash
-        run: |
-          set -euo pipefail
-          scp \
-            -o BatchMode=yes \
-            -o ConnectTimeout=12 \
-            -i ~/.ssh/id_ed25519 \
-            docker-compose.deploy.yml deploy.env \
-            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}:${{ env.DEPLOY_PATH }}/"
-
-      - name: Pull and start pinned images
-        shell: bash
-        run: |
-          set -euo pipefail
-          ssh \
-            -o BatchMode=yes \
-            -o ConnectTimeout=12 \
-            -o ServerAliveInterval=5 \
-            -o ServerAliveCountMax=3 \
-            -i ~/.ssh/id_ed25519 \
-            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}" \
-            "cd '${{ env.DEPLOY_PATH }}' && echo '${{ secrets.GHCR_READ_TOKEN }}' | docker login ghcr.io -u '${{ vars.GHCR_READ_USERNAME }}' --password-stdin && docker compose -f docker-compose.deploy.yml --env-file deploy.env pull && docker compose -f docker-compose.deploy.yml --env-file deploy.env up -d && docker image prune -f"
+    uses: popforge/Popforge.Shared/.github/workflows/reusable-deploy-beta.yml@main
+    with:
+      cluster_name: my-accounting
+      # Chemin historique du déploiement — le reusable utilise /opt/{cluster} par défaut,
+      # on surcharge pour conserver la convention existante du serveur.
+      working_directory: /home/${{ vars.ORACLE_SSH_USERNAME }}/my-accounting
+    secrets: inherit
 
   configure-nginx:
     needs: deploy

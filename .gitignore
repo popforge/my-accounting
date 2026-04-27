@@ -23,3 +23,21 @@ obj/
 
 # Logs
 *.log
+
+node_modules/
+
+# Node.js build output — ne pas committer
+dist/
+
+# TypeScript build info (tsc --incremental)
+*.tsbuildinfo
+
+# package-lock.json est intentionnellement tracké (builds reproductibles)
+# Si une règle parent venait à l'ignorer, décommenter :
+# !package-lock.json
+
+# NOTE : Des fichiers .js ont été détectés dans src/ (App.vue.js, main.js, roles.js,
+# router/index.js, views/HomePage.vue.js). Ce sont des sorties de compilation TypeScript
+# (tsc émettant dans le répertoire source). Ceci est probablement un mauvais réglage
+# tsconfig (outDir non configuré ou "rootDir" incorrect). À corriger dans tsconfig.app.json.
+# Ces fichiers NE sont PAS ignorés ici — corriger la config tsc à la source.
