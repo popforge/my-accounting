@@ -27,6 +27,21 @@ applyTo: "**"
 - **`UserSecretsId`** : générer via `dotnet user-secrets init` (ou `[System.Guid]::NewGuid()` en PowerShell). Ne jamais saisir un UUID manuellement ou séquentiel.
 - **`docker-compose.deploy.yml`** : tout service web doit définir un `healthcheck` sur l'API et conditionner les services dépendants avec `depends_on: condition: service_healthy`.
 
+## Environnement de développement local
+
+Variables d'environnement requises (configurées en variable utilisateur Windows) :
+
+| Variable | Usage |
+|---|---|
+| `NUGET_AUTHTOKEN` | PAT GitHub (`read:packages`) — accès au feed NuGet `https://nuget.pkg.github.com/popforge` |
+| `ADO_PAT` | PAT Azure DevOps — accès aux pipelines et artefacts ADO |
+
+Clé SSH Oracle Cloud :
+- Chemin : `C:\Users\raclavo\.ssh\id_ed25519.pub`
+- Usage : accès SSH aux VMs et bastions Oracle Cloud
+
+**Ces valeurs ne doivent jamais être committées dans le code source.**
+
 ## Code reviews
 
 **Règle** : Après chaque code review, créer un fichier de log dans `docs/reviews/` avec le format :
