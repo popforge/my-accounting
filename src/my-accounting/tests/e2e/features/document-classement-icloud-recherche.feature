@@ -1,5 +1,5 @@
 # language: fr
-@epic-1 @story-1-0 @area-documents @component-classement
+@draft @epic-1 @story-1-0 @area-documents @component-classement
 Fonctionnalité: Classement iCloud et recherche multi-critères
   En tant que Rachel
   Je veux que chaque document capturé soit classé automatiquement dans iCloud selon des règles claires

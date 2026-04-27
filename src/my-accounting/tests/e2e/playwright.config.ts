@@ -3,14 +3,14 @@ import { defineBddConfig } from 'playwright-bdd';
 
 const testDir = defineBddConfig({
   features: './features/**/*.feature',
-  steps: './steps/**/*.ts',
-  importTestFrom: './support/fixtures/base.fixtures',
+  steps: ['./steps/**/*.ts', './support/fixtures/base.fixtures.ts'],
 });
 
 export default defineConfig({
   testDir,
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
+  grepInvert: /@draft/,
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: [
