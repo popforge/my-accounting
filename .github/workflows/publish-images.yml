@@ -48,7 +48,7 @@ jobs:
           push: true
           tags: ghcr.io/popforge/my-accounting-api:${{ steps.meta.outputs.tag }}
           secrets: |
-            nuget_token=${{ secrets.GITHUB_TOKEN }}
+            nuget_token=${{ secrets.NUGET_AUTHTOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Build and push App image
         uses: docker/build-push-action@v6
@@ -58,7 +58,7 @@ jobs:
           push: true
           tags: ghcr.io/popforge/my-accounting-app:${{ steps.meta.outputs.tag }}
           secrets: |
-            npm_token=${{ secrets.GITHUB_TOKEN }}
+            npm_token=${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Write image-tags artifact
         shell: bash
