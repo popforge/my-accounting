@@ -45,3 +45,6 @@ docs/
 **DevSecOps & Security:**
 - Security go/no-go checks, deployment security, compliance verification → `docs/devsecops/`
 
+**Test:**
+- Test strategy, test data management, testing guidelines → `docs/test/`
+- All documentation from TEA (Murat) conversation should be placed here.
