@@ -77,13 +77,64 @@ jobs:
   # working_directory préserve le chemin /home/{user}/my-accounting de l'ancien job.
   deploy:
     needs: prepare-deploy
-    uses: popforge/Popforge.Shared/.github/workflows/reusable-deploy-beta.yml@main
-    with:
-      cluster_name: my-accounting
-      # Chemin historique du déploiement — le reusable utilise /opt/{cluster} par défaut,
-      # on surcharge pour conserver la convention existante du serveur.
-      working_directory: /home/${{ vars.ORACLE_SSH_USERNAME }}/my-accounting
-    secrets: inherit
+    runs-on: ubuntu-latest
+    environment: beta
+    env:
+      DEPLOY_PATH: /home/${{ vars.ORACLE_SSH_USERNAME }}/my-accounting
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download deploy.env artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: deploy-env-files
+
+      - name: Configure SSH key
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.ORACLE_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -T 5 -H "${{ vars.ORACLE_SSH_HOST }}" >> ~/.ssh/known_hosts || true
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Copy deploy files to VM
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=12 \
+            -i ~/.ssh/id_ed25519 \
+            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}" \
+            "mkdir -p '${{ env.DEPLOY_PATH }}'"
+          scp \
+            -o BatchMode=yes \
+            -o ConnectTimeout=12 \
+            -i ~/.ssh/id_ed25519 \
+            deploy.env \
+            docker-compose.deploy.yml \
+            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}:${{ env.DEPLOY_PATH }}/"
+
+      - name: Deploy containers on VM
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=30 \
+            -o ServerAliveInterval=10 \
+            -o ServerAliveCountMax=6 \
+            -i ~/.ssh/id_ed25519 \
+            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}" \
+            "cd '${{ env.DEPLOY_PATH }}' && \
+             echo '${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin 2>/dev/null || \
+             echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u popforge --password-stdin; \
+             docker compose -f docker-compose.deploy.yml --env-file deploy.env pull && \
+             docker compose -f docker-compose.deploy.yml --env-file deploy.env up -d --remove-orphans"
 
   configure-nginx:
     needs: deploy
