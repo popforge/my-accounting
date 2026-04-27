@@ -87,6 +87,17 @@ jobs:
         with:
           name: deploy-env-files
 
+      - name: Configure SSH key
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.ORACLE_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -T 5 -H "${{ vars.ORACLE_SSH_HOST }}" >> ~/.ssh/known_hosts || true
+          chmod 600 ~/.ssh/known_hosts
+
       - name: Precheck SSH TCP reachability
         shell: bash
         run: |
@@ -99,40 +110,41 @@ jobs:
           nc -zvw5 "${host}" 22
 
       - name: Ensure remote deploy path exists
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ vars.ORACLE_SSH_HOST }}
-          username: ${{ vars.ORACLE_SSH_USERNAME }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
-          timeout: 30s
-          command_timeout: 2m
-          script: mkdir -p "${{ env.DEPLOY_PATH }}"
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=12 \
+            -o ServerAliveInterval=5 \
+            -o ServerAliveCountMax=3 \
+            -i ~/.ssh/id_ed25519 \
+            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}" \
+            "mkdir -p '${{ env.DEPLOY_PATH }}'"
 
       - name: Copy deployment manifest
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ vars.ORACLE_SSH_HOST }}
-          username: ${{ vars.ORACLE_SSH_USERNAME }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
-          timeout: 30s
-          source: docker-compose.deploy.yml,deploy.env
-          target: ${{ env.DEPLOY_PATH }}
-          strip_components: 0
+        shell: bash
+        run: |
+          set -euo pipefail
+          scp \
+            -o BatchMode=yes \
+            -o ConnectTimeout=12 \
+            -i ~/.ssh/id_ed25519 \
+            docker-compose.deploy.yml deploy.env \
+            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}:${{ env.DEPLOY_PATH }}/"
 
       - name: Pull and start pinned images
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ vars.ORACLE_SSH_HOST }}
-          username: ${{ vars.ORACLE_SSH_USERNAME }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
-          timeout: 30s
-          command_timeout: 15m
-          script: |
-            cd "${{ env.DEPLOY_PATH }}"
-            echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ vars.GHCR_READ_USERNAME }}" --password-stdin
-            docker compose -f docker-compose.deploy.yml --env-file deploy.env pull
-            docker compose -f docker-compose.deploy.yml --env-file deploy.env up -d
-            docker image prune -f
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=12 \
+            -o ServerAliveInterval=5 \
+            -o ServerAliveCountMax=3 \
+            -i ~/.ssh/id_ed25519 \
+            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}" \
+            "cd '${{ env.DEPLOY_PATH }}' && echo '${{ secrets.GHCR_READ_TOKEN }}' | docker login ghcr.io -u '${{ vars.GHCR_READ_USERNAME }}' --password-stdin && docker compose -f docker-compose.deploy.yml --env-file deploy.env pull && docker compose -f docker-compose.deploy.yml --env-file deploy.env up -d && docker image prune -f"
 
   configure-nginx:
     needs: deploy
@@ -140,14 +152,27 @@ jobs:
     environment: beta
 
     steps:
+      - name: Configure SSH key
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.ORACLE_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -T 5 -H "${{ vars.ORACLE_SSH_HOST }}" >> ~/.ssh/known_hosts || true
+          chmod 600 ~/.ssh/known_hosts
+
       - name: Ensure host nginx reverse proxy for my-accounting
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ vars.ORACLE_SSH_HOST }}
-          username: ${{ vars.ORACLE_SSH_USERNAME }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
-          command_timeout: 15m
-          script: |
+        shell: bash
+        run: |
+          ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=12 \
+            -o ServerAliveInterval=5 \
+            -o ServerAliveCountMax=3 \
+            -i ~/.ssh/id_ed25519 \
+            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}" <<'EOF'
             set -euo pipefail
             domain="${{ vars.MY_ACCOUNTING_BETA_DOMAIN }}"
             api_port="${{ vars.MY_ACCOUNTING_API_PORT }}"
@@ -183,15 +208,18 @@ jobs:
             fi
             sudo nginx -t
             sudo systemctl reload nginx
+            EOF
 
       - name: Ensure HTTPS certificate on host nginx (Certbot)
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ vars.ORACLE_SSH_HOST }}
-          username: ${{ vars.ORACLE_SSH_USERNAME }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
-          command_timeout: 15m
-          script: |
+        shell: bash
+        run: |
+          ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=12 \
+            -o ServerAliveInterval=5 \
+            -o ServerAliveCountMax=3 \
+            -i ~/.ssh/id_ed25519 \
+            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}" <<'EOF'
             set -euo pipefail
             certbot_email="${{ secrets.CERTBOT_EMAIL }}"
             if [ -z "${certbot_email}" ]; then
@@ -209,3 +237,4 @@ jobs:
             fi
             sudo nginx -t
             sudo systemctl reload nginx
+            EOF
