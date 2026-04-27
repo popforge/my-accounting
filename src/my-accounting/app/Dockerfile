@@ -1,8 +1,10 @@
+# syntax=docker/dockerfile:1
 FROM node:22-alpine AS build
 WORKDIR /app
-ARG NPM_TOKEN
 COPY package*.json .npmrc ./
-RUN npm install
+RUN --mount=type=secret,id=npm_token \
+    export NPM_TOKEN=$(cat /run/secrets/npm_token) && \
+    npm install
 COPY . .
 RUN npm run build
 
