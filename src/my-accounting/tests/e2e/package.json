@@ -11,6 +11,7 @@
     "test:e2e:report": "playwright show-report"
   },
   "devDependencies": {
+    "@types/node": "^22.15.0",
     "@playwright/test": "^1.42.0",
     "playwright-bdd": "^7.0.0",
     "typescript": "^5.4.0"

@@ -1,0 +1,72 @@
+name: MyAccounting E2E on Beta
+
+on:
+  workflow_run:
+    workflows: ["Deploy MyAccounting to Beta"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: my-accounting-e2e-beta
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: beta
+    timeout-minutes: 20
+
+    env:
+      BASE_URL: ${{ vars.MY_ACCOUNTING_BETA_BASE_URL || 'https://my-accounting-beta.popsalon.app' }}
+      OIDC_AUTHORITY: ${{ vars.MY_ACCOUNTING_OIDC_AUTHORITY || 'https://auth-beta.popsalon.app' }}
+      OIDC_CLIENT_ID: my-accounting-cluster
+      OIDC_SCOPE: openid email profile roles
+      TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+      OIDC_CLIENT_SECRET: ${{ secrets.OIDC_CLIENT_SECRET }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          for name in TEST_USER_EMAIL TEST_USER_PASSWORD OIDC_CLIENT_SECRET; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required beta secret: ${name}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: src/my-accounting/tests/e2e/package-lock.json
+
+      - name: Install E2E dependencies
+        working-directory: src/my-accounting/tests/e2e
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: src/my-accounting/tests/e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests against beta
+        working-directory: src/my-accounting/tests/e2e
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: src/my-accounting/tests/e2e/playwright-report/
+          retention-days: 7

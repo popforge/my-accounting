@@ -1,13 +1,15 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
-using OpenIddict.Abstractions;
-using OpenIddict.Validation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddOpenApi();
+
+builder.Services.AddHealthChecks();
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
@@ -18,33 +20,33 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-builder.Services
-    .AddOpenIddict()
-    .AddValidation(options =>
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        options.SetIssuer(builder.Configuration["Oidc:Authority"]
-            ?? throw new InvalidOperationException("Oidc:Authority is required."));
-        options.AddAudiences("my-accounting-cluster");
-        options.UseSystemNetHttp();
-        options.UseAspNetCore();
+        options.Authority = builder.Configuration["Oidc:Authority"];
+        options.TokenValidationParameters.ValidateAudience = false;
     });
-
-builder.Services.AddAuthentication(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-app.UseSwagger();
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
+app.MapOpenApi();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "MyAccounting API v1");
-    c.RoutePrefix = "swagger";
+    c.SwaggerEndpoint("/openapi/v1.json", "MyAccounting API v1");
+    c.RoutePrefix = "api-docs";
 });
 
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapHealthChecks("/health").AllowAnonymous();
 app.MapControllers();
 
 app.Run();
@@ -60,13 +62,13 @@ public sealed class HealthController : ControllerBase
 
 [ApiController]
 [Route("api/documents")]
-[Authorize(AuthenticationSchemes = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)]
+[Authorize]
 public sealed class DocumentsController : ControllerBase
 {
     [HttpGet]
     public IActionResult Search()
     {
-        var userId = User.FindFirst(OpenIddictConstants.Claims.Subject)?.Value;
+        var userId = User.FindFirst("sub")?.Value;
 
         return Ok(new
         {

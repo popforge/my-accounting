@@ -57,6 +57,7 @@ jobs:
           MY_ACCOUNTING_APP_PORT=8096
           MY_ACCOUNTING_ASPNETCORE_ENVIRONMENT=Beta
           MY_ACCOUNTING_DB_CONNECTION=${{ secrets.MY_ACCOUNTING_DB_CONNECTION }}
+          MY_ACCOUNTING_OIDC_AUTHORITY=${{ vars.MY_ACCOUNTING_OIDC_AUTHORITY || 'https://auth-beta.popsalon.app' }}
           EOF
           sed -i 's/^[[:space:]]*//' deploy.env
 
@@ -91,3 +92,65 @@ jobs:
             docker compose -f docker-compose.deploy.yml --env-file deploy.env pull
             docker compose -f docker-compose.deploy.yml --env-file deploy.env up -d
             docker image prune -f
+
+      - name: Ensure host nginx reverse proxy for my-accounting
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ vars.ORACLE_SSH_HOST }}
+          username: ${{ vars.ORACLE_SSH_USERNAME }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            domain="${{ vars.MY_ACCOUNTING_BETA_DOMAIN || 'my-accounting-beta.popsalon.app' }}"
+            api_port="${{ vars.MY_ACCOUNTING_API_PORT || '8095' }}"
+            app_port="${{ vars.MY_ACCOUNTING_APP_PORT || '8096' }}"
+
+            sudo tee "/etc/nginx/sites-available/${domain}" > /dev/null <<NGINXCONF
+            server {
+                listen 80;
+                server_name ${domain};
+
+                location / {
+                    proxy_pass http://127.0.0.1:${app_port};
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Forwarded-Proto \$scheme;
+                }
+
+                location /api/ {
+                    proxy_pass http://127.0.0.1:${api_port};
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Real-IP \$remote_addr;
+                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto \$scheme;
+                }
+            }
+            NGINXCONF
+
+            sudo ln -sfn "/etc/nginx/sites-available/${domain}" "/etc/nginx/sites-enabled/${domain}"
+            if [ -f /etc/nginx/sites-enabled/default ]; then
+              sudo rm -f /etc/nginx/sites-enabled/default
+            fi
+            sudo nginx -t
+            sudo systemctl reload nginx
+
+      - name: Ensure HTTPS certificate on host nginx (Certbot)
+        if: ${{ secrets.CERTBOT_EMAIL != '' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ vars.ORACLE_SSH_HOST }}
+          username: ${{ vars.ORACLE_SSH_USERNAME }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            domain="${{ vars.MY_ACCOUNTING_BETA_DOMAIN || 'my-accounting-beta.popsalon.app' }}"
+            if sudo test -d "/etc/letsencrypt/live/${domain}"; then
+              echo "Certificate already exists for ${domain}; running renew and nginx reload."
+              sudo certbot renew --non-interactive
+            else
+              echo "Issuing new certificate for ${domain}."
+              sudo certbot --nginx -d "${domain}" --non-interactive --agree-tos -m "${{ secrets.CERTBOT_EMAIL }}" --redirect
+            fi
+            sudo nginx -t
+            sudo systemctl reload nginx

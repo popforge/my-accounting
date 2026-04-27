@@ -17,7 +17,7 @@ export default defineConfig({
     ['list'],
   ],
   use: {
-    baseURL: process.env.BASE_URL ?? 'http://localhost:5173',
+    baseURL: process.env.BASE_URL ?? (process.env.CI ? 'https://my-accounting-beta.popsalon.app' : 'http://localhost:5175'),
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     locale: 'fr-CA',

@@ -35,6 +35,7 @@ docs/
 
 **Testing Strategy & Test Data (Documentation):**
 - Test architecture, test data strategy, testing guidelines → `docs/test/`
+- All documentation from TEA (Murat) conversation should be placed here.
 - Note: does not include `.feature` files (Gherkin) which should be located in `src/{ClusterName}/tests/e2e/features/`
 
 **Architecture & Technical Decisions:**
@@ -44,7 +45,3 @@ docs/
 
 **DevSecOps & Security:**
 - Security go/no-go checks, deployment security, compliance verification → `docs/devsecops/`
-
-**Test:**
-- Test strategy, test data management, testing guidelines → `docs/test/`
-- All documentation from TEA (Murat) conversation should be placed here.

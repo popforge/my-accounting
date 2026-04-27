@@ -12,7 +12,8 @@
 
 - Workflows CI/CD créés et pushés sur `main` :
   - `.github/workflows/publish-images.yml` — build + push GHCR des deux images sur push `main`
-  - `.github/workflows/deploy-beta.yml` — déploiement SSH sur Oracle VM après publish
+  - `.github/workflows/deploy-beta.yml` — déploiement SSH sur Oracle VM après publish + Certbot idempotent
+  - `.github/workflows/e2e-beta.yml` — exécution Playwright E2E sur environnement beta réellement déployé
 - `docker-compose.deploy.yml` créé à la racine
 - Dockerfiles placeholder créés :
   - `src/my-accounting/server/MyAccounting.Server/Dockerfile` — API .NET 10
@@ -24,9 +25,8 @@
 2. Configurer l'environment `beta` dans GitHub (secrets + variables)
 3. Créer le code source réel (remplacer les Dockerfiles placeholder)
 4. Créer le DNS Cloudflare `my-accounting-beta.popsalon.app`
-5. Configurer nginx sur la VM Oracle
-6. Obtenir le certificat TLS Let's Encrypt
-7. Premier déploiement
+5. Configurer nginx sur la VM Oracle (reverse proxy)
+6. Premier déploiement
 
 ---
 
@@ -52,8 +52,15 @@ Dans `Settings > Environments > beta` du repo `popforge/my-accounting` :
 | Secret / Variable | Type | Valeur |
 |---|---|---|
 | `MY_ACCOUNTING_DB_CONNECTION` | Secret | Connection string Neon complète (étape 1) |
+| `TEST_USER_EMAIL` | Secret | Compte de test Popforge.Auth beta |
+| `TEST_USER_PASSWORD` | Secret | Mot de passe du compte test |
+| `OIDC_CLIENT_SECRET` | Secret | Client secret OIDC pour `my-accounting-cluster` |
+| `CERTBOT_EMAIL` | Secret | Email administratif Let's Encrypt |
 | `ORACLE_SSH_HOST` | Variable | `148.116.77.58` |
 | `ORACLE_SSH_USERNAME` | Variable | `ubuntu` |
+| `MY_ACCOUNTING_BETA_BASE_URL` | Variable | `https://my-accounting-beta.popsalon.app` |
+| `MY_ACCOUNTING_BETA_DOMAIN` | Variable | `my-accounting-beta.popsalon.app` |
+| `MY_ACCOUNTING_OIDC_AUTHORITY` | Variable | `https://auth-beta.popsalon.app` |
 | `ORACLE_SSH_KEY` | Secret | Clé privée SSH (`~/.ssh/id_ed25519`) — même clé que tous les autres clusters |
 | `GHCR_READ_USERNAME` | Variable | Compte GitHub avec accès `read:packages` — même que les autres clusters |
 | `GHCR_READ_TOKEN` | Secret | PAT GitHub `read:packages` — même que les autres clusters |
@@ -130,12 +137,19 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ---
 
-## Étape 6 — Obtenir le certificat TLS Let's Encrypt
+## Étape 6 — Certificat TLS Let's Encrypt (standard automatisé)
+
+Le workflow `.github/workflows/deploy-beta.yml` exécute désormais automatiquement un step idempotent:
 
 ```bash
-sudo certbot --nginx -d my-accounting-beta.popsalon.app
-sudo systemctl reload nginx
+sudo certbot --nginx -d my-accounting-beta.popsalon.app \
+  --non-interactive --agree-tos \
+  -m "${CERTBOT_EMAIL}" --redirect
 ```
+
+- Si le certificat existe déjà: `certbot renew` + reload nginx.
+- Sinon: émission d'un nouveau certificat + redirection HTTPS.
+- Le secret `CERTBOT_EMAIL` est requis dans l'environment `beta`.
 
 ---
 
@@ -143,7 +157,8 @@ sudo systemctl reload nginx
 
 Le premier push sur `main` avec du vrai code déclenchera automatiquement :
 1. `publish-images.yml` — build et push `ghcr.io/popforge/my-accounting-api` et `ghcr.io/popforge/my-accounting-app`
-2. `deploy-beta.yml` — SSH sur la VM, `docker compose pull` + `up -d` dans `/opt/my-accounting`
+2. `deploy-beta.yml` — SSH sur la VM, `docker compose pull` + `up -d` dans `/opt/my-accounting`, puis validation/renouvellement Certbot
+3. `e2e-beta.yml` — tests Playwright E2E réels contre `https://my-accounting-beta.popsalon.app`
 
 Vérification après déploiement :
 ```powershell

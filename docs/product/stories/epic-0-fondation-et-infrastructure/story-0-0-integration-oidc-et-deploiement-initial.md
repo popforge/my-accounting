@@ -199,7 +199,7 @@ Voir : [docs/architecture/oidc-integration.md](../../../architecture/oidc-integr
 4. Validate beta deployment (CORS, OIDC, Swagger)
 5. Create CI/CD workflow for E2E beta
 
-**See**: [`_bmad-output/implementation-artifacts/e2e-oidc-strategy-approved.md`](../../../../_bmad-output/implementation-artifacts/e2e-oidc-strategy-approved.md)
+**See**: [`docs/test/e2e-oidc-strategy-approved.md`](../../../test/e2e-oidc-strategy-approved.md)
 
 ---
 ## Artefacts techniques
