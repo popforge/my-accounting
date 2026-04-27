@@ -1,25 +1,28 @@
-name: Deploy MyAccounting to Beta
+﻿name: Deploy MyAccounting to Beta
 
 on:
   workflow_run:
     workflows: ["Publish MyAccounting Images"]
     types: [completed]
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      publish_run_id:
+        description: "Successful Publish MyAccounting Images run id"
+        required: true
+        type: string
 
 permissions:
   contents: read
   actions: read
 
 jobs:
-  deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  prepare-deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     environment: beta
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Download image tags artifact
         uses: actions/download-artifact@v4
         with:
@@ -27,26 +30,22 @@ jobs:
           github-token: ${{ github.token }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Load image tags
+      - name: Load and validate image tags
         id: tags
         shell: bash
         run: |
           sed 's/^[[:space:]]*//' image-tags.env > image-tags-clean.env
           source ./image-tags-clean.env
-          echo "api_tag=${MY_ACCOUNTING_API_TAG}" >> "${GITHUB_OUTPUT}"
-          echo "app_tag=${MY_ACCOUNTING_APP_TAG}" >> "${GITHUB_OUTPUT}"
-
-      - name: Validate image tags
-        shell: bash
-        run: |
-          for tag in "${{ steps.tags.outputs.api_tag }}" "${{ steps.tags.outputs.app_tag }}"; do
+          for tag in "${API_TAG}" "${APP_TAG}"; do
             if [[ ! "$tag" =~ ^(main|sha)-[0-9a-f]{7,40}$ && ! "$tag" =~ ^v[0-9]+(\.[0-9]+){1,2}([-.][0-9A-Za-z.-]+)?$ ]]; then
               echo "Invalid image tag: ${tag}" >&2
               exit 1
             fi
           done
+          echo "api_tag=${API_TAG}" >> "${GITHUB_OUTPUT}"
+          echo "app_tag=${APP_TAG}" >> "${GITHUB_OUTPUT}"
 
-      - name: Create deploy.env payload
+      - name: Create deploy.env
         shell: bash
         run: |
           oidc_authority="${{ vars.MY_ACCOUNTING_OIDC_AUTHORITY }}"
@@ -65,38 +64,27 @@ jobs:
           EOF
           sed -i 's/^[[:space:]]*//' deploy.env
 
-      - name: Ensure remote deploy path exists
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Upload deploy.env artifact
+        uses: actions/upload-artifact@v4
         with:
-          host: ${{ vars.ORACLE_SSH_HOST }}
-          username: ${{ vars.ORACLE_SSH_USERNAME }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
-          script: sudo mkdir -p /opt/my-accounting && sudo chown ubuntu:ubuntu /opt/my-accounting
+          name: deploy-env-files
+          path: deploy.env
+          retention-days: 1
 
-      - name: Copy deployment manifest
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ vars.ORACLE_SSH_HOST }}
-          username: ${{ vars.ORACLE_SSH_USERNAME }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
-          source: docker-compose.deploy.yml,deploy.env
-          target: /opt/my-accounting
-          strip_components: 0
+  deploy:
+    needs: prepare-deploy
+    uses: popforge/Popforge.Shared/.github/workflows/reusable-deploy-beta.yml@main
+    with:
+      cluster_name: my-accounting
+      deploy_env_artifact_name: deploy-env-files
+    secrets: inherit
 
-      - name: Pull and start pinned images
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ vars.ORACLE_SSH_HOST }}
-          username: ${{ vars.ORACLE_SSH_USERNAME }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
-          command_timeout: 15m
-          script: |
-            cd /opt/my-accounting
-            echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ vars.GHCR_READ_USERNAME }}" --password-stdin
-            docker compose -f docker-compose.deploy.yml --env-file deploy.env pull
-            docker compose -f docker-compose.deploy.yml --env-file deploy.env up -d
-            docker image prune -f
+  configure-nginx:
+    needs: deploy
+    runs-on: ubuntu-latest
+    environment: beta
 
+    steps:
       - name: Ensure host nginx reverse proxy for my-accounting
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -142,7 +130,6 @@ jobs:
             sudo systemctl reload nginx
 
       - name: Ensure HTTPS certificate on host nginx (Certbot)
-        if: ${{ secrets.CERTBOT_EMAIL != '' }}
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ vars.ORACLE_SSH_HOST }}
@@ -151,6 +138,11 @@ jobs:
           command_timeout: 15m
           script: |
             set -euo pipefail
+            certbot_email="${{ secrets.CERTBOT_EMAIL }}"
+            if [ -z "${certbot_email}" ]; then
+              echo "CERTBOT_EMAIL not configured, skipping certbot step."
+              exit 0
+            fi
             domain="${{ vars.MY_ACCOUNTING_BETA_DOMAIN }}"
             domain="${domain:-my-accounting-beta.popsalon.app}"
             if sudo test -d "/etc/letsencrypt/live/${domain}"; then
@@ -158,7 +150,7 @@ jobs:
               sudo certbot renew --non-interactive
             else
               echo "Issuing new certificate for ${domain}."
-              sudo certbot --nginx -d "${domain}" --non-interactive --agree-tos -m "${{ secrets.CERTBOT_EMAIL }}" --redirect
+              sudo certbot --nginx -d "${domain}" --non-interactive --agree-tos -m "${certbot_email}" --redirect
             fi
             sudo nginx -t
             sudo systemctl reload nginx
