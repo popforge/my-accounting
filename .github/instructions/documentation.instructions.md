@@ -2,15 +2,15 @@
 applyTo: "docs/**/*.md"
 ---
 
-## Documentation Placement Conventions
+## Conventions de placement de la documentation — MyAccounting
 
-Prefer brief, clear, and concise content with bullet points or checklists where appropriate. When creating or updating project and analysis documentation (not code):
+Préférer un contenu bref, clair et concis avec des listes à puces ou des listes de contrôle. Lors de la création ou de la mise à jour de documentation de projet et d'analyse (pas de code) :
 
-- Naming convention kebab-case mandatory.
-- Prefer lowercase. Can be overruled by readability concerns (e.g., `ADR-001-template.md`).
-- Always write in french with accents.
+- Convention de nommage kebab-case obligatoire.
+- Préférer les minuscules. Peut être remplacé par des considérations de lisibilité (ex. : `ADR-001-stack-technique-mvp.md`).
+- Toujours écrire en français avec les accents.
 
-Folder hierachy :
+Hiérarchie de dossiers :
 
 ```
 docs/
@@ -25,23 +25,26 @@ docs/
 │   └── stories/
 │       ├── index.md
 │       ├── story-template.md
-│       └── epic-a<n>-<slug>/
+│       └── epic-m<n>-<slug>/
 ├── reviews/
 └── project-context.md
 ```
 
-**Agile Framework & Team Process:**
-- Definition of Done, Definition of Ready, Sprint Planning templates, Git workflow → `docs/agile-framework/`
+**Cadre Agile & Processus d'équipe :**
+- Definition of Done, Definition of Ready, modèles de Sprint Planning, workflow Git → `docs/agile-framework/`
 
-**Testing Strategy & Test Data (Documentation):**
-- Test architecture, test data strategy, testing guidelines → `docs/test/`
-- All documentation from TEA (Murat) conversation should be placed here.
-- Note: does not include `.feature` files (Gherkin) which should be located in `src/{ClusterName}/tests/e2e/features/`
+**Stratégie de test & Données de test (documentation) :**
+- Architecture de test, stratégie de données de test, directives de test → `docs/test/`
+- Documentation provenant de conversations avec TEA (Murat) devraient être ici.
+- Les fichiers `.feature` (Gherkin) se trouvent dans `src/my-accounting/tests/e2e/features/`
 
-**Architecture & Technical Decisions:**
+**Architecture & Décisions techniques :**
 - Architecture Decision Records (ADRs) → `docs/architecture/adr/`
-- ADR naming convention: kebab-case (e.g., `ADR-001-stack-technique-mvp.md`)
-- Other architecture documentation → `docs/architecture/`
+- Convention de nommage ADR : kebab-case (ex. : `ADR-001-stack-technique-mvp.md`)
+- Autre documentation d'architecture → `docs/architecture/`
 
-**DevSecOps & Security:**
-- Security go/no-go checks, deployment security, compliance verification → `docs/devsecops/`
+**DevSecOps & Sécurité :**
+- Vérifications de sécurité go/no-go, sécurité du déploiement, vérification de conformité → `docs/devsecops/`
+
+**Fichiers gitignored (ne jamais committer) :**
+- `docs/architecture/dev-secrets-setup.md` — credentials locaux de développement

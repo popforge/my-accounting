@@ -1,13 +1,3 @@
-import { Page } from '@playwright/test';
-
-/**
- * Page Object de base pour MyAccounting.
- * Toutes les pages héritent de cette classe.
- */
-export abstract class BasePage {
-  constructor(protected readonly page: Page) {}
-
-  async attendreChargement(): Promise<void> {
-    await this.page.waitForLoadState('networkidle');
-  }
-}
+﻿// Réexporte BasePage depuis @popforge/cluster-core/testing
+// Hériter de cette classe dans toutes les pages MyAccounting.
+export { BasePage } from '@popforge/cluster-core/testing'

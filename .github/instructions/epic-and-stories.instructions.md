@@ -2,50 +2,52 @@
 applyTo: "docs/product/stories/**/*.md"
 ---
 
-## Epics and Stories Documentation Structure Preference
+## Epics and Stories — MyAccounting
 
-- Use `docs/product/stories/story-template.md` as the base for every new story
-- Use `docs/product/personas.md` as the source of truth for persona names in user stories
-- Create one document per epic in `docs/product/stories/epic-<id>-<slug>/epic-<id>.md`
-- Create one document per user story in `docs/product/stories/epic-<id>-<slug>/story-<id>-<slug>.md`
-- Create an index document in `docs/product/stories/index.md` with links to epics and stories
+- Utiliser `docs/product/stories/story-template.md` comme base pour chaque nouvelle story.
+- Utiliser `docs/product/personas.md` comme source de vérité pour les noms de personas.
+- Créer un document par epic dans `docs/product/stories/epic-m<id>-<slug>/epic-m<id>.md`.
+- Créer un document par story dans `docs/product/stories/epic-m<id>-<slug>/story-m<id>-<slug>.md`.
+- Créer un index dans `docs/product/stories/index.md` avec liens vers epics et stories.
 
-## Gherkin Scenarios
+> Les identifiants d'épics et stories de ce cluster sont préfixés `m` pour éviter les collisions avec d'autres clusters (ex : Epic m1, Story m1-2).
 
-- Gherkin scenarios live under `src/**/tests/e2e/features/` — they are the source of truth
-- Stories reference the `.feature` file path — **do not duplicate scenarios inside the story**
-- A `.feature` file must exist (or be created) before development starts (DOD rule)
+## Scénarios Gherkin
 
-## Acceptance Criterion Format
+- Les scénarios Gherkin vivent sous `src/my-accounting/tests/e2e/features/` — ils sont la source de vérité.
+- Les stories référencent le chemin du fichier `.feature` — **ne pas dupliquer les scénarios dans la story**.
+- Un fichier `.feature` doit exister (ou être créé) avant que le développement commence (règle DOD).
 
-Each AC must be written as a numbered list item in natural language, readable by a Product Owner:
+## Format des critères d'acceptation
+
+Chaque AC doit être rédigé comme un élément de liste numérotée en langage naturel :
 
 ```markdown
-1. **AC1 — [Titre court]** : [Description complète : contexte, action de l'utilisateur, résultat visible à l'écran. Ne pas mentionner de détails techniques (noms de classes, endpoints, status codes) — ceux-ci vont dans les Artefacts techniques.]  
+1. **AC1 — [Titre court]** : [Description complète : contexte, action de l'utilisateur, résultat observable. Ne pas mentionner de détails techniques (noms de classes, endpoints, status codes) — ceux-ci vont dans les Artefacts techniques.]
+
    *Type de test : E2E Gherkin*
 ```
 
 **Règles :**
-- Le texte doit être compréhensible par Rachel sans connaissance technique
-- Utiliser des phrases complètes, pas des abréviations ou des flèches (→)
-- Le type de test s'indique en italique sur la ligne suivante, pas dans un tableau
+- Le texte doit être compréhensible sans connaissance technique approfondie.
+- Utiliser des phrases complètes, pas des abréviations ou des flèches (→).
+- Le type de test s'indique en italique sur la ligne suivante, pas dans un tableau.
 
 **Types de test valides :**
 - **E2E Gherkin** — comportement visible dans le navigateur (Playwright + playwright-bdd)
 - **Unit (xUnit)** — règle métier ou logique backend non observable en E2E
 - **Unit (Vitest)** — logique isolée dans un store ou composable Vue
-- **Manuel** — validation par Rachel dans l'environnement déployé (SMS réel, provider externe, etc.)
+- **Intégration (xUnit)** — controller REST ou flux API complet via WebApplicationFactory
+- **Manuel** — validation dans l'environnement déployé (provider externe, SMS, token réel, etc.)
 
-## Error / Output Table Format
+## Format de table d'erreurs
 
-Use HTTP status + errorCode + user-facing message (not raw integers):
+Utiliser HTTP status + errorCode + message utilisateur (pas d'entiers bruts) :
 
 | HTTP | errorCode | Message utilisateur affiché |
 |------|-----------|---------------------------|
-| 404  | `SalonNotFound` | Salon introuvable |
+| 404  | `ResourceNotFound` | Ressource introuvable |
 
-## Technical Artifacts Section
+## Section Artefacts techniques
 
-Include an "Artefacts techniques" table listing all files to create or modify,
-so the implementing agent can scope the work without reading the full codebase.
-
+Inclure un tableau "Artefacts techniques" listant tous les fichiers à créer ou modifier, pour que l'agent implémenteur puisse cadrer le travail sans lire tout le codebase.

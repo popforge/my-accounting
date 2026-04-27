@@ -2,12 +2,12 @@
 applyTo: "**"
 ---
 
-# Standards de développement — Popforge.MyAccounting
+# Standards de développement — MyAccounting
 
 ## Document normatif de référence
 
 `docs/architecture/saas-cluster-topology.md` est le **document d'autorité** pour :
-- Les URLs publiques de chaque cluster (ex : `/swagger/index.html` pour le Swagger UI)
+- Les URLs publiques de chaque cluster (ex : `/api-docs/index.html` pour le Swagger UI)
 - Les numéros de port de déploiement
 - La liste des clusters et environnements
 
@@ -15,10 +15,17 @@ applyTo: "**"
 
 ## Standards techniques
 
-- **Swagger UI** : exposé à `/swagger/index.html` via Swashbuckle.AspNetCore — pas Scalar, pas un autre chemin.
+- **Swagger UI** : exposé à `/api-docs/index.html` via `Microsoft.AspNetCore.OpenApi` + `Swashbuckle.AspNetCore.SwaggerUI`.
 - **Environnements ASP.NET** : `Development` (local), `Beta` (staging), `Production` (prod).
 - **Base de données** : Neon PostgreSQL. Connection string via `user-secrets` en dev, variable d'env en Beta/Prod.
 
+## Standards Docker
+
+- **`.dockerignore` obligatoire** : tout `Dockerfile` doit avoir un `.dockerignore` dans le même répertoire — backend **et** frontend SPA. Exclure au minimum `obj/`, `bin/`, `Properties/launchSettings.json` (API .NET) ou `node_modules/`, `dist/`, `.env.development`, `.env.production` (SPA).
+- **Secrets dans les layers** : tout token ou secret passé en `ARG` (ex : `NPM_TOKEN`) doit être utilisé, consommé et supprimé dans un **seul `RUN`**. Ne jamais séparer la création et la suppression du fichier secret en plusieurs `RUN` distincts.
+- **Layer cache .NET** : dans un Dockerfile .NET, toujours copier le `.csproj` en premier, lancer `dotnet restore`, puis copier les sources. Utiliser `--no-restore` dans `dotnet publish`.
+- **`UserSecretsId`** : générer via `dotnet user-secrets init` (ou `[System.Guid]::NewGuid()` en PowerShell). Ne jamais saisir un UUID manuellement ou séquentiel.
+- **`docker-compose.deploy.yml`** : tout service web doit définir un `healthcheck` sur l'API et conditionner les services dépendants avec `depends_on: condition: service_healthy`.
 
 ## Code reviews
 
@@ -27,8 +34,6 @@ applyTo: "**"
 ```
 docs/reviews/YYYY-MM-DD-<scope>.md
 ```
-
-Exemples : `2026-04-26-hub-backend-pipeline.md`, `2026-05-10-auth-oidc-flow.md`
 
 Le fichier doit contenir :
 - La plage de commits reviewée (`git diff <from>..<to>`)
@@ -39,5 +44,4 @@ Le fichier doit contenir :
 **Après avoir écrit le fichier log**, analyser les findings et se poser les questions suivantes :
 - Est-ce qu'un standard de programmation manquant aurait pu prévenir ce finding ? → Ajouter la règle dans ce fichier (`development-standard.instructions.md`).
 - Est-ce qu'une instruction AI manquante aurait pu prévenir ce finding ? → Ajouter la règle dans le fichier d'instructions concerné (`.github/instructions/`).
-- Est-ce qu'un document manquant sous `docs/` aurait pu guider le développeur ? → Créer ou compléter le document approprié (`docs/architecture/`, `docs/devsecops/`, etc.).
-
+- Est-ce qu'un document manquant sous `docs/` aurait pu guider le développeur ? → Créer ou compléter le document approprié.

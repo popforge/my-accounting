@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\Popforge.Shared\packages\dotnet\Popforge.AspNetCore.Extensions\Popforge.AspNetCore.Extensions.csproj" />
+    <PackageReference Include="Popforge.AspNetCore.Extensions" Version="1.0.0" />
   </ItemGroup>
 
 </Project>

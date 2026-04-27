@@ -2,7 +2,7 @@
 applyTo: "src/**/*.{cs}"
 ---
 
-## Backend - Tests xUnit en C#
+## Backend - Tests xUnit en C# — MyAccounting
 
 Les tests backend utilisent **xUnit** avec **FluentAssertions** pour valider la logique métier côté .NET 10.
 
@@ -16,27 +16,18 @@ Ces instructions s'appliquent aux :
 
 ### Structure cible
 
-Structure attendue par cluster :
-
 ```text
 src/my-accounting/tests/
   unit/
     Services/
-      DocumentIndexServiceTests.cs
-      ICloudSyncServiceTests.cs
     Validators/
-      DocumentClassificationValidatorTests.cs
     Builders/
-      DocumentBuilder.cs
   integration/
     Api/
-      DocumentsControllerTests.cs
     Repositories/
-      DocumentRepositoryTests.cs
     Support/
       IntegrationTestFixture.cs
       DatabaseFixture.cs
-  MyAccounting.Tests.csproj
 ```
 
 ### Nommage
@@ -64,13 +55,13 @@ Utiliser **FluentAssertions** pour toutes les assertions :
 ```csharp
 // Préférer
 result.Should().BeEquivalentTo(expected);
-result.Documents.Should().HaveCount(3);
-act.Should().Throw<DocumentNotFoundException>()
-   .WithMessage("*2026*");
+result.Items.Should().HaveCount(3);
+act.Should().ThrowAsync<InvalidOperationException>()
+   .WithMessage("*attendu*");
 
 // Éviter
 Assert.Equal(expected, result);
-Assert.Throws<DocumentNotFoundException>(() => act());
+Assert.Throws<InvalidOperationException>(() => act());
 ```
 
 ### Builders de données de test
@@ -78,54 +69,34 @@ Assert.Throws<DocumentNotFoundException>(() => act());
 Créer un `Builder` pour chaque agrégat testé fréquemment, localisé dans `tests/unit/Builders/` :
 
 ```csharp
-// Exemple
-public class DocumentBuilder
+public class ExempleBuilder
 {
-    private string _nom = "2026-01-15_EDF_facture energie_45.00.pdf";
-    private string _dossier = "!Facturette";
-    private int _annee = 2026;
+    private string _nom = "valeur-par-defaut";
 
-    public DocumentBuilder AvecNom(string nom) { _nom = nom; return this; }
-    public DocumentBuilder AvecDossier(string dossier) { _dossier = dossier; return this; }
-    public DocumentBuilder AvecAnnee(int annee) { _annee = annee; return this; }
+    public ExempleBuilder AvecNom(string nom) { _nom = nom; return this; }
 
-    public Document Construire() => new Document(_nom, _dossier, _annee);
+    public Exemple Construire() => new Exemple(_nom);
 }
 ```
 
 - Toujours partir de valeurs par défaut valides.
 - Ne pas inliner des objets complexes directement dans `Arrange` — utiliser le builder.
 
-### Ce qu'il faut tester
-
-Tester :
-
-- les règles de classement et de nommage des documents iCloud ;
-- les validations métier (format de nom, année valide, catégorie reconnue) ;
-- les transformations de données (ancienne arborescence → structure cible) ;
-- les cas d'erreur attendus (fichier introuvable, doublon, format invalide).
-
-Ne pas tester :
-
-- le comportement intrinsèque d'EF Core ou d'ASP.NET ;
-- le routage HTTP (préférer les tests d'intégration controllers) ;
-- la sérialisation JSON sauf si une règle métier en dépend.
-
 ### Traçabilité
 
 - Ajouter un commentaire de traçabilité en tête de chaque classe de test :
 
 ```csharp
-// Story 1.2 - Import des documents iCloud existants
-// AC : Le service renomme les fichiers selon le format cible
+// Story m1-2 - <titre de la story>
+// AC : <critère d'acceptation couvert>
 ```
 
 - Utiliser les traits xUnit pour filtrer par epic et story :
 
 ```csharp
-[Trait("Epic", "1")]
-[Trait("Story", "1-2")]
-public class DocumentImportServiceTests { ... }
+[Trait("Epic", "m1")]
+[Trait("Story", "m1-2")]
+public class ExempleServiceTests { ... }
 ```
 
 ### Isolation des tests d'intégration
@@ -139,8 +110,22 @@ public class DocumentImportServiceTests { ... }
 - Un test ne valide qu'un seul comportement observable.
 - Le pattern AAA (Arrange / Act / Assert) est obligatoire et les trois sections doivent être identifiables.
 - Aucune logique conditionnelle dans un test.
-- Les données figées doivent être uniques ou isolées pour éviter les collisions entre tests parallèles.
+- Les données créées doivent être uniques ou nettoyées pour éviter les collisions entre tests parallèles.
 - Les tests doivent passer en isolation et en exécution parallèle.
+
+### Ce qu'il faut tester
+
+Tester :
+- les règles métier et validations du domaine ;
+- les transformations et calculs (entrée → sortie) ;
+- les cas d'erreur attendus (ressource introuvable, doublon, format invalide) ;
+- les controllers REST : autorisations, codes HTTP, corps de réponse.
+
+### Ne pas tester
+
+- Le comportement intrinsèque d'EF Core ou d'ASP.NET.
+- Le routage HTTP pur (préférer les tests d'intégration controllers).
+- La sérialisation JSON sauf si une règle métier en dépend.
 
 ### Références
 

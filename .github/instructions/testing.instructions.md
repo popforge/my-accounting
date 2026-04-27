@@ -2,21 +2,22 @@
 applyTo: "src/**/*.{ts,vue,cs,feature}"
 ---
 
-## Standard global de test
+## Standard global de test — MyAccounting
 
 Le projet MyAccounting suit une stratégie de test orientée risque avec séparation claire des niveaux de test.
 
 ### Choix du niveau de test
 
-- **E2E Gherkin** : pour les parcours visibles par Rachel et les flux critiques de bout en bout.
-- **Unit (Vitest)** : pour la logique isolée côté frontend, notamment stores, composables et règles de transformation.
-- **Unit (xUnit)** : pour la logique métier backend, validations, services et règles non visibles en E2E.
+- **Acceptance Gherkin** : pour les parcours utilisateur critiques et observables dans un navigateur.
+- **Unit (xUnit)** : pour la logique métier backend — validations, services, règles de transformation.
+- **Unit (Vitest)** : pour la logique isolée côté frontend — stores, composables, règles de transformation.
+- **Intégration (xUnit + WebApplicationFactory)** : pour les controllers API REST et flux API complets.
 
 ### Règles de sélection
 
 - Favoriser le niveau le plus bas qui couvre correctement le comportement.
-- Ne pas dupliquer inutilement un même comportement en E2E et en test unitaire.
-- Réserver les E2E aux scénarios critiques, transverses ou à forte valeur utilisateur.
+- Ne pas dupliquer un même flux en Gherkin et en test d'intégration sans raison claire.
+- Réserver les scénarios Gherkin aux flux utilisateur observables dans un navigateur.
 
 ### Définition de qualité minimale
 
@@ -38,49 +39,45 @@ Chaque test doit être :
 
 ### Règles transverses
 
-- Les scénarios Gherkin destinés à Rachel sont rédigés en français.
-- Les tests doivent refléter le vocabulaire métier de MyAccounting, pas celui d'un autre produit.
+- Les scénarios Gherkin sont rédigés en français.
+- Les tests doivent refléter le vocabulaire métier de MyAccounting, pas celui d'un autre cluster.
 - Les tests doivent être cohérents avec les stories et critères d'acceptation.
-- Quand un test crée des données, il doit prévoir leur nettoyage ou un mécanisme d'isolation équivalent.
+- Quand un test crée des données, il doit prévoir leur nettoyage ou utiliser un mécanisme d'isolation équivalent.
 
 ### Traçabilité attendue
 
 - Une story qui exige un comportement visible doit référencer un fichier `.feature`.
-- Les tags `@epic-<n>` et `@story-<n-n>` doivent permettre de relier feature, story et exécution de test.
+- Les tags `@epic-m<n>` et `@story-m<n>-<n>` doivent permettre de relier feature, story et exécution de test.
 
-## E2E OIDC: Toujours contre beta réellement déployé
+## E2E OIDC : toujours contre beta réellement déployé
 
 ### ⚠️ Règle non-négociable
 
-Tous les tests E2E Playwright qui incluent des flows d'authentification **DOIVENT s'exécuter contre l'environnement beta réellement déployé**. Aucune mocking d'auth OIDC, aucune simulation locale de Popforge.Auth.
+Tous les tests E2E Playwright qui incluent des flux d'authentification **doivent s'exécuter contre l'environnement beta réellement déployé**. Aucun mock d'auth OIDC, aucune simulation locale de Popforge.Auth.
 
 ### Justification
 
-1. **Mocking local = faux négatifs garantis**: Cache les bugs OIDC, CORS, token validation qui détonent en production.
-2. **Bugs authentification = disaster**: Attaques, session hijacking, accès non autorisés — impossible à récupérer après GO.
-3. **Beta est l'environnement réel le plus proche**: Même infra, même Auth, même CORS config — donc même risque que prod.
+1. **Mocking local = faux négatifs garantis** : cache les bugs OIDC, CORS, validation de token qui explosent en production.
+2. **Bugs d'authentification = désastre** : accès non autorisés, session hijacking — impossible à récupérer après Go Live.
+3. **Beta est l'environnement réel le plus proche** : même infra, même Auth, même config CORS.
 
-### Pattern obligatoire: Network-First pour OIDC
+### Pattern obligatoire : Network-First pour OIDC
 
-- Enregistrer la redirection OIDC **AVANT** la navigation qui la déclenche, avec `waitForNavigation()`.
+- Enregistrer la redirection OIDC **avant** la navigation qui la déclenche.
 - Attendre la réponse réseau explicitement — jamais `waitForTimeout()`.
 - Vérifier le callback `/auth/callback` qui ramène l'utilisateur.
 
-### Fixtures + Credentials
+### Secrets de test
 
-- Utiliser fixture `authToken` (auth-session) pour pré-fetcher un token valide depuis Popforge.Auth.
-- **Jamais** hardcoder credentials en test ou commit.
-- **Toujours** injecter credentials via GitHub Actions secrets → variables d'environnement.
-- Rotation trimestrielle des credentials (voir `docs/operations/oidc-test-credentials-rotation.md`).
+Les credentials de test sont injectés via GitHub Actions secrets → variables d'environnement :
 
-### CI/CD E2E
+- `TEST_USER_EMAIL` — Compte de test dans Popforge.Auth beta
+- `TEST_USER_PASSWORD` — Mot de passe du compte de test
+- `OIDC_CLIENT_SECRET` — Client secret pour `my-accounting-cluster`
 
-- Tests E2E OIDC runs **APRÈS** unit + integration tests (pas en parallèle).
-- Redeployer beta que si nouveau code, pas sur chaque test retry.
-- Gestion des secrets: `TEST_USER_EMAIL`, `TEST_USER_PASSWORD`, `OIDC_CLIENT_SECRET`.
+**Jamais** committer de vrais credentials. Rotation trimestrielle obligatoire. Voir `docs/operations/oidc-test-credentials-rotation.md`.
 
 ### Références spécialisées
 
 - Pour les conventions Playwright / Gherkin frontend, voir `testing-frontend.instructions.md`.
-- Pour la fixture auth-session et pattern network-first, voir `testing-frontend.instructions.md` section "Authentification OIDC".
-
+- Pour les conventions xUnit backend, voir `testing-backend.instructions.md`.

@@ -2,7 +2,7 @@
 applyTo: "src/**/tests/**/*.{ts,feature}"
 ---
 
-## Frontend E2E - Playwright BDD en français
+## Frontend E2E - Playwright BDD en français — MyAccounting
 
 Les tests E2E frontend utilisent **Playwright** avec **playwright-bdd** pour exprimer les scénarios métier en Gherkin français.
 
@@ -16,17 +16,13 @@ Ces instructions s'appliquent aux :
 
 ### Structure cible
 
-Structure attendue par cluster :
-
 ```text
 src/my-accounting/tests/
   e2e/
     features/
-      document-capture-mobile-icloud.feature
-      document-import-icloud-existant.feature
+      <fonctionnalite>.feature
     steps/
-      document-capture.steps.ts
-      document-search.steps.ts
+      <fonctionnalite>.steps.ts
     support/
       fixtures/
       pages/
@@ -39,23 +35,23 @@ Le dossier généré par `bddgen` doit rester hors édition manuelle et être ig
 
 - Toujours inclure `# language: fr` en première ligne.
 - Utiliser les mots-clés français : `Fonctionnalité:`, `Contexte:`, `Scénario:`, `Plan du scénario:`, `Soit`, `Quand`, `Et`, `Alors`.
-- Ajouter les tags `@epic-<n>` et `@story-<n-n>` au niveau de la fonctionnalité ou du scénario selon le besoin.
-- Employer le vocabulaire métier MyAccounting et les termes compréhensibles par Rachel.
-- Ne pas réutiliser d'exemples métier provenant d'un autre produit.
+- Ajouter les tags `@epic-m<n>` et `@story-m<n>-<n>` au niveau de la fonctionnalité ou du scénario.
+- Employer le vocabulaire métier de MyAccounting.
+- Ne pas réutiliser d'exemples métier provenant d'un autre cluster.
 
 Exemple :
 
 ```gherkin
 # language: fr
-@epic-1 @story-1-2
-Fonctionnalité: Import des documents iCloud existants
-  En tant que Rachel
-  Je veux importer mes documents déjà classés dans iCloud
-  Afin de conserver mon historique sans recommencer le classement
+@epic-m1 @story-m1-2
+Fonctionnalité: <Titre de la fonctionnalité>
+  En tant que <persona>
+  Je veux <action>
+  Afin de <bénéfice>
 
-  Scénario: Import du dossier !Facturette d'une année
-    Quand je lance l'import iCloud pour l'année "2026"
-    Alors les documents du dossier "!Facturette" sont indexés
+  Scénario: <Titre du scénario>
+    Quand <action déclenchante>
+    Alors <résultat observable>
 ```
 
 ### Step definitions
@@ -63,8 +59,6 @@ Fonctionnalité: Import des documents iCloud existants
 - Les steps doivent être courtes, explicites et réutilisables.
 - Les assertions principales doivent rester visibles dans les steps ou helpers proches, pas enfouies dans une couche opaque.
 - Les steps doivent refléter des actions utilisateur et des résultats observables.
-- Réutiliser un pattern cohérent avec l'installation réelle de `playwright-bdd` du repo.
-- Ne pas introduire d'exemple d'imports ou d'API Playwright qui ne correspond pas au setup effectif.
 
 ### Règles de stabilité E2E
 
@@ -73,7 +67,7 @@ Fonctionnalité: Import des documents iCloud existants
 - Ne pas utiliser `waitForTimeout(...)` sauf justification exceptionnelle documentée.
 - Préférer une préparation de données rapide et contrôlée plutôt qu'un long setup via UI.
 
-## Authentification OIDC en E2E
+### Authentification OIDC en E2E
 
 ### Fixture auth-session obligatoire
 
@@ -83,63 +77,56 @@ Tous les tests avec flux d'authentification doivent utiliser la fixture `authTok
 import { test } from '../support/auth/auth-session';
 
 test('accès sans session → redirect vers Popforge.Auth', async ({ page }) => {
-  // No token used here
   await page.goto('https://my-accounting-beta.popsalon.app/dashboard');
   await expect(page).toHaveURL(/auth-beta\.popsalon\.app/);
 });
 
-test('accès avec token valide → dashboard accessible', async ({ page, authToken }) => {
-  // Token available from fixture - tests post-login flows
+test('accès avec token valide → page accessible', async ({ page, authToken }) => {
   await page.goto('https://my-accounting-beta.popsalon.app/dashboard');
-  await expect(page.getByRole('heading', { name: /documents/i })).toBeVisible();
+  await expect(page.getByRole('heading')).toBeVisible();
 });
 ```
 
 ### Pattern network-first pour callback OIDC
 
-Toujours attendre le callback **AVANT** de déclencher la redirection:
+Toujours attendre le callback **avant** de déclencher la redirection :
 
 ```typescript
-test('OIDC login flow complet', async ({ page }) => {
-  // 1. Enregistrer le callback FIRST
-  const callbackPromise = page.waitForNavigation((nav) =>
-    nav.url().includes('/auth/callback')
-  );
+// ✅ Correct
+const callbackPromise = page.waitForNavigation(nav =>
+  nav.url().includes('/auth/callback')
+);
+await page.goto('https://my-accounting-beta.popsalon.app/');
+await callbackPromise;
 
-  // 2. PUIS déclencher redirect
-  await page.goto('https://my-accounting-beta.popsalon.app/'); 
-  // → Redirected to auth-beta.popsalon.app
-
-  // 3. PUIS attendre callback
-  await callbackPromise; 
-  // → Popforge.Auth renvoie vers /auth/callback → app home
-});
-```
-
-**Jamais**:
-```typescript
-// ❌ MAUVAIS: Timeout arbitraire
+// ❌ Mauvais : timeout arbitraire
 await page.goto('https://my-accounting-beta.popsalon.app/');
 await page.waitForTimeout(5000);
-
-// ❌ MAUVAIS: Navigation attendue APRÈS action (trop tard)
-await page.goto('https://my-accounting-beta.popsalon.app/');
-await page.waitForNavigation();
 ```
 
 ### Scénarios autorisés en E2E
 
-- `@auth-redirect`: Utilisateur non authentifié → redirect vers Popforge.Auth ✅
-- `@auth-callback`: Callback depuis Popforge.Auth → session établie ✅
-- `@auth-session-expired`: Token expiré → 401 → redirect vers login ✅
+- `@auth-redirect` : utilisateur non authentifié → redirect vers Popforge.Auth ✅
+- `@auth-callback` : callback depuis Popforge.Auth → session établie ✅
+- `@auth-session-expired` : token expiré → 401 → redirect vers login ✅
 
-### Scénarios EXCLUS du E2E
+### Scénarios exclus du E2E de ce cluster
 
-- Input credentials (formulaire Popforge.Auth — pas notre repo)
-- MFA flows (dépendance Popforge.Auth, complexité)
-- Social login (out of scope V1)
+- Saisie de credentials sur le formulaire de Popforge.Auth (hors périmètre)
+- Flux MFA (appartient à Popforge.Auth)
+- Social login (hors périmètre)
 
-**Raison**: Ces scénarios testent Popforge.Auth, pas MyAccounting. Les tester ici = coût de maintenance sans valeur pour ce repo.
+**Raison** : ces scénarios testent Popforge.Auth, pas ce cluster.
+
+### Credentials d'authentification de test
+
+Les credentials sont injectés via GitHub Actions secrets → variables d'environnement :
+
+- `TEST_USER_EMAIL` — Compte de test dans Popforge.Auth beta
+- `TEST_USER_PASSWORD` — Mot de passe du compte de test
+- `OIDC_CLIENT_SECRET` — Client secret pour `my-accounting-cluster`
+
+**Jamais** committer de vrais credentials en `.env` ou en dur dans le code. Rotation trimestrielle obligatoire. Voir `docs/operations/oidc-test-credentials-rotation.md`.
 
 ### Couverture frontend
 
@@ -149,21 +136,16 @@ await page.waitForNavigation();
 
 ### Commandes
 
-Les scripts exacts doivent refléter le `package.json` réel du cluster. Si des commandes standard existent, conserver cette logique :
+Les scripts exacts doivent refléter le `package.json` réel du cluster :
 
 ```bash
-npm run test:e2e        # Run all E2E tests against beta
-npm run test:e2e:ui     # Run in UI mode (debugging)
+npm run test:e2e        # bddgen + playwright test (headless)
+npm run test:e2e:ui     # bddgen + playwright test --ui (interactif)
 ```
 
 `bddgen` doit toujours être exécuté avant `playwright test`, directement ou via les scripts du projet.
 
-### Credentials d'authentification de test
+### Références
 
-Pour les tests E2E contre Popforge.Auth beta, les credentials sont injectées via GitHub Actions secrets:
-
-- `TEST_USER_EMAIL` — Compte de test dans Popforge.Auth beta
-- `TEST_USER_PASSWORD` — Mot de passe du compte de test
-- `OIDC_CLIENT_SECRET` — Client secret pour `my-accounting-cluster`
-
-**Jamais** committer de vrais credentials en `.env` ou en dur dans le code. Rotation trimestrielle obligatoire. Voir `docs/operations/oidc-test-credentials-rotation.md`.
+- Pour le standard global de test, voir `testing.instructions.md`.
+- Pour les tests xUnit backend, voir `testing-backend.instructions.md`.
