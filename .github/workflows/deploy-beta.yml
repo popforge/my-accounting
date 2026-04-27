@@ -131,7 +131,7 @@ jobs:
             -i ~/.ssh/id_ed25519 \
             "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}" \
             "cd '${{ env.DEPLOY_PATH }}' && \
-             echo '${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin 2>/dev/null || \
+             echo '${{ secrets.GHCR_READ_TOKEN || secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin 2>/dev/null || \
              echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u popforge --password-stdin; \
              docker compose -f docker-compose.deploy.yml --env-file deploy.env pull && \
              docker compose -f docker-compose.deploy.yml --env-file deploy.env up -d --remove-orphans"

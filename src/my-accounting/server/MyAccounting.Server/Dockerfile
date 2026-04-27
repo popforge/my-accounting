@@ -11,9 +11,7 @@ RUN --mount=type=secret,id=nuget_token \
     dotnet restore "MyAccounting.Server.csproj"
 RUN dotnet publish "MyAccounting.Server.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# Runtime officiel ASP.NET pour éviter la dépendance à une image de base privée introuvable.
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
-ENV ASPNETCORE_URLS=http://+:8080
-EXPOSE 8080
+# Hérite de ghcr.io/popforge/base-api — voir Popforge.Shared/docker/base-api/
+FROM ghcr.io/popforge/base-api:10.0 AS final
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "MyAccounting.Server.dll"]
