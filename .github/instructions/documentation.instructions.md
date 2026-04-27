@@ -15,11 +15,18 @@ Folder hierachy :
 ```
 docs/
 ├── agile-framework/
-├── backlog/
 ├── architecture/
+│   ├── adr/
+│   └── deployment-beta.md
 ├── devsecops/
 ├── test/
 ├── product/
+│   ├── personas.md
+│   └── stories/
+│       ├── index.md
+│       ├── story-template.md
+│       └── epic-a<n>-<slug>/
+├── reviews/
 └── project-context.md
 ```
 

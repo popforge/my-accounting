@@ -12,11 +12,11 @@
 
 | Paramètre | Valeur |
 |---|---|
-| Client ID | `{{CLUSTER_ID}}` |
-| Port dev local | `{{LOCAL_PORT}}` |
-| Scopes | `openid email profile roles {{CUSTOM_SCOPES}}` |
-| Callback dev | `http://localhost:{{LOCAL_PORT}}/auth/callback` |
-| Callback beta | `https://{{CLUSTER_DOMAIN}}.popsalon.app/auth/callback` |
+| Client ID | `my-accounting-cluster` |
+| Port dev local | `5175` |
+| Scopes | `openid email profile roles` |
+| Callback dev | `http://localhost:5175/auth/callback` |
+| Callback beta | `https://my-accounting-beta.popsalon.app/auth/callback` |
 | Auth dev/beta | `https://auth-beta.popsalon.app` |
 | Auth production | `https://auth.popsalon.app` |
 
@@ -24,9 +24,19 @@
 
 ## Prérequis
 
-1. Client `{{CLUSTER_ID}}` enregistré dans `Popforge.Auth/src/auth/server/Auth.Server/appsettings.json`
+1. Client `my-accounting-cluster` enregistré dans `Popforge.Auth/src/auth/server/Auth.Server/appsettings.json`
    → Voir `docs/architecture/oidc-client-registration.md` dans le repo `Popforge.Auth`
 2. Secret `NPM_TOKEN` (PAT `read:packages`) dans les GitHub Actions secrets du repo
+
+---
+
+## Conventions de déploiement
+
+> Lire [docs/architecture/saas-cluster-topology.md](./saas-cluster-topology.md) avant d'implanter.
+> Ce fichier définit la structure URL standard de la plateforme, notamment :
+> - `/api/*` → Backend API
+> - `/swagger/index.html` → Swagger UI (obligatoire sur tous les clusters)
+> - `/auth/callback` → Callback OIDC (route Vue Router)
 
 ---
 

@@ -1,6 +1,8 @@
 // Fixture de base pour les tests d'intégration MyAccounting.
 // Référence : testing-backend.instructions.md — section Isolation des tests d'intégration
 
+using Xunit;
+
 namespace MyAccounting.Tests.Integration.Support;
 
 /// <summary>

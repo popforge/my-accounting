@@ -8,6 +8,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "my-accounting", "my-account
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E20F28B4-63DF-0083-D3FB-816E9239F922}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "server", "server", "{AB8060FC-3E3D-4F60-B831-9F263A46D6E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyAccounting.Server", "src\my-accounting\server\MyAccounting.Server\MyAccounting.Server.csproj", "{3A0DF497-4E84-4CC4-8A5E-7A6C2F7295A7}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyAccounting.Tests", "src\my-accounting\tests\MyAccounting.Tests.csproj", "{B5E99213-07E7-6EF3-C054-6431672D7296}"
 EndProject
 Global
@@ -16,6 +20,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3A0DF497-4E84-4CC4-8A5E-7A6C2F7295A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A0DF497-4E84-4CC4-8A5E-7A6C2F7295A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A0DF497-4E84-4CC4-8A5E-7A6C2F7295A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A0DF497-4E84-4CC4-8A5E-7A6C2F7295A7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B5E99213-07E7-6EF3-C054-6431672D7296}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B5E99213-07E7-6EF3-C054-6431672D7296}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5E99213-07E7-6EF3-C054-6431672D7296}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -27,6 +35,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{8D831ED6-5357-D13E-04D6-7D0BBB01D946} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{E20F28B4-63DF-0083-D3FB-816E9239F922} = {8D831ED6-5357-D13E-04D6-7D0BBB01D946}
+		{AB8060FC-3E3D-4F60-B831-9F263A46D6E8} = {8D831ED6-5357-D13E-04D6-7D0BBB01D946}
+		{3A0DF497-4E84-4CC4-8A5E-7A6C2F7295A7} = {AB8060FC-3E3D-4F60-B831-9F263A46D6E8}
 		{B5E99213-07E7-6EF3-C054-6431672D7296} = {E20F28B4-63DF-0083-D3FB-816E9239F922}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

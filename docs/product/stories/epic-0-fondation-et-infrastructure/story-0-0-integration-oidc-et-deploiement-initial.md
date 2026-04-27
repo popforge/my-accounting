@@ -130,9 +130,10 @@ Voir : [docs/architecture/oidc-integration.md](../../../architecture/oidc-integr
 
 ### Backend (.NET 10) — `src/my-accounting/server/MyAccounting.Server/`
 
-- [ ] Ajouter les packages NuGet `OpenIddict.AspNetCore` et `OpenIddict.Client.SystemNetHttp`
+- [ ] Ajouter les packages NuGet `OpenIddict.AspNetCore`, `OpenIddict.Client.SystemNetHttp` et `Swashbuckle.AspNetCore`
 - [ ] Configurer `AddOpenIddict().AddValidation(...)` dans `Program.cs`
 - [ ] Ajouter `UseAuthentication()` et `UseAuthorization()` dans le pipeline
+- [ ] Exposer Swagger UI à `/swagger/index.html` (conforme à la topologie — voir `docs/architecture/saas-cluster-topology.md`)
 - [ ] Créer `appsettings.json` et `appsettings.Development.json` avec `Oidc:Authority`
 - [ ] Décorer les controllers avec `[Authorize(AuthenticationSchemes = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)]`
 - [ ] Ajouter `Oidc__Authority` dans `docker-compose.deploy.yml`
@@ -142,6 +143,63 @@ Voir : [docs/architecture/oidc-integration.md](../../../architecture/oidc-integr
 
 - [ ] Créer `authentification-oidc.feature` — scénario de redirection sans session active
 - [ ] Créer les step definitions `authentification.steps.ts`
+
+---
+## Artefacts techniques
+
+| Type | Chemin | Action |
+|------|--------|--------|
+| Config npm | `src/my-accounting/app/.npmrc` | Créer |
+| Package OIDC | `@popforge/cluster-core` | Installer |
+| Point d'entrée Vue | `src/my-accounting/app/src/main.ts` | Modifier |
+| Router Vue | `src/my-accounting/app/src/router/index.ts` | Modifier |
+| Env dev | `src/my-accounting/app/.env.development` | Créer |
+| Env prod | `src/my-accounting/app/.env.production` | Créer |
+| Program.cs | `src/my-accounting/server/MyAccounting.Server/Program.cs` | Modifier |
+| appsettings | `src/my-accounting/server/MyAccounting.Server/appsettings.json` | Modifier |
+| appsettings dev | `src/my-accounting/server/MyAccounting.Server/appsettings.Development.json` | Modifier |
+| Docker compose | `docker-compose.deploy.yml` | Modifier |
+| Feature Gherkin | `src/my-accounting/tests/e2e/features/authentification-oidc.feature` | Créer |
+| Step definitions | `src/my-accounting/tests/e2e/steps/authentification.steps.ts` | Créer |
+| Tests intégration | `src/my-accounting/tests/integration/Api/AuthorizationTests.cs` | Créer |
+
+---
+## Review Findings — Code Review 2026-04-26
+
+### Patches appliqués ✅
+
+- [x] [Patch] `UseHttpsRedirection()` removed (HTTP-only in Docker, nginx handles TLS) [`Program.cs:35`]
+- [x] [Patch] CORS configuration added (`AddCors()` + `UseCors()` + `appsettings`) [`Program.cs`, `appsettings.json/Development.json`]
+- [x] [Patch] Package `@popforge/cluster-core` version corrected (`^0.0.0` → `*`) [`package.json`]
+- [x] [Patch] `docker-compose.deploy.yml` OIDC_Authority uses `:?` (fail-safe, not default) [`docker-compose.deploy.yml`]
+- [x] [Patch] `Microsoft.AspNetCore.Mvc.Testing` added for integration tests [`MyAccounting.Tests.csproj`]
+- [x] [Patch] `AuthorizationTests.cs` created — validates 401 on protected endpoint without token [`integration/Api/`]
+- [x] [Patch] `OpenIddict.Client.SystemNetHttp` removed (unused for validation-only server) [`MyAccounting.Server.csproj`]
+
+### Deferred findings
+
+- [x] [Defer] `DocumentsController` kept as skeleton for Story 1.0 (pre-existing code not in scope)
+- [x] [Defer] `authentification.steps.ts` — E2E steps deferred pending fixture auth-session (depends on GitHub Actions secrets and TEA strategy approval)
+
+### Decision-needed items resolved
+
+*None after Murat (TEA) approved E2E OIDC strategy.*
+
+---
+## E2E Strategy Approved by Murat (TEA) — 2026-04-26
+
+**Decision**: All E2E Playwright tests with OIDC flows **MUST** run against beta deployed environment. No mocking of auth.
+
+**Why**: Mocking local hides OIDC/CORS/token bugs that escape to production. Beta = realistic test.
+
+**Implementation Plan** (Phase 2, after patches #1-7):
+1. Create fixture `auth-session.ts` (fetches token from Popforge.Auth beta)
+2. Configure GitHub Actions secrets (`TEST_USER_EMAIL`, `TEST_USER_PASSWORD`, `OIDC_CLIENT_SECRET`)
+3. Implement step definitions with network-first pattern
+4. Validate beta deployment (CORS, OIDC, Swagger)
+5. Create CI/CD workflow for E2E beta
+
+**See**: [`_bmad-output/implementation-artifacts/e2e-oidc-strategy-approved.md`](../../../../_bmad-output/implementation-artifacts/e2e-oidc-strategy-approved.md)
 
 ---
 ## Artefacts techniques
@@ -196,3 +254,8 @@ Voir : [docs/architecture/oidc-integration.md](../../../architecture/oidc-integr
 >
 
 ---
+## Sources
+
+- [docs/architecture/oidc-integration.md](../../../architecture/oidc-integration.md)
+- [docs/architecture/saas-cluster-topology.md](../../../architecture/saas-cluster-topology.md) — conventions URL, structure `/api/*` et `/swagger/index.html` obligatoires
+
