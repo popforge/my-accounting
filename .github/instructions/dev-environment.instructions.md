@@ -11,12 +11,13 @@ Ces variables doivent être définies au niveau utilisateur Windows (`[System.En
 | Variable | Usage |
 |---|---|
 | `NUGET_AUTHTOKEN` | PAT GitHub avec `read:packages` — utilisé par `nuget.config` pour résoudre `Popforge.AspNetCore.Extensions` depuis GitHub Packages |
+| `GHCR_READ_TOKEN` | PAT GitHub avec `read:packages` — utilisé pour lire les images privées GHCR (ex: `ghcr.io/popforge/base-api`) dans les workflows CI/CD |
 | `ADO_PAT` | PAT Azure DevOps — accès aux ressources ADO du compte popforge |
 
 Pour vérifier qu'elles sont en place :
 ```powershell
 [System.Environment]::GetEnvironmentVariables("User").GetEnumerator() |
-    Where-Object { $_.Key -in @("NUGET_AUTHTOKEN","ADO_PAT") } |
+    Where-Object { $_.Key -in @("NUGET_AUTHTOKEN","GHCR_READ_TOKEN","ADO_PAT") } |
     Select-Object Key
 ```
 
