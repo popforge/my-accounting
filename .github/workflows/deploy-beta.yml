@@ -75,6 +75,8 @@ jobs:
     needs: prepare-deploy
     runs-on: ubuntu-latest
     environment: beta
+    env:
+      DEPLOY_PATH: /home/${{ vars.ORACLE_SSH_USERNAME }}/my-accounting
 
     steps:
       - name: Checkout
@@ -85,13 +87,26 @@ jobs:
         with:
           name: deploy-env-files
 
+      - name: Precheck SSH TCP reachability
+        shell: bash
+        run: |
+          set -euo pipefail
+          host="${{ vars.ORACLE_SSH_HOST }}"
+          if [ -z "${host}" ]; then
+            echo "ORACLE_SSH_HOST is empty." >&2
+            exit 1
+          fi
+          nc -zvw5 "${host}" 22
+
       - name: Ensure remote deploy path exists
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ vars.ORACLE_SSH_HOST }}
           username: ${{ vars.ORACLE_SSH_USERNAME }}
           key: ${{ secrets.ORACLE_SSH_KEY }}
-          script: sudo mkdir -p /opt/my-accounting && sudo chown ubuntu:ubuntu /opt/my-accounting
+          timeout: 30s
+          command_timeout: 2m
+          script: mkdir -p "${{ env.DEPLOY_PATH }}"
 
       - name: Copy deployment manifest
         uses: appleboy/scp-action@v0.1.7
@@ -99,8 +114,9 @@ jobs:
           host: ${{ vars.ORACLE_SSH_HOST }}
           username: ${{ vars.ORACLE_SSH_USERNAME }}
           key: ${{ secrets.ORACLE_SSH_KEY }}
+          timeout: 30s
           source: docker-compose.deploy.yml,deploy.env
-          target: /opt/my-accounting
+          target: ${{ env.DEPLOY_PATH }}
           strip_components: 0
 
       - name: Pull and start pinned images
@@ -109,9 +125,10 @@ jobs:
           host: ${{ vars.ORACLE_SSH_HOST }}
           username: ${{ vars.ORACLE_SSH_USERNAME }}
           key: ${{ secrets.ORACLE_SSH_KEY }}
+          timeout: 30s
           command_timeout: 15m
           script: |
-            cd /opt/my-accounting
+            cd "${{ env.DEPLOY_PATH }}"
             echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ vars.GHCR_READ_USERNAME }}" --password-stdin
             docker compose -f docker-compose.deploy.yml --env-file deploy.env pull
             docker compose -f docker-compose.deploy.yml --env-file deploy.env up -d
