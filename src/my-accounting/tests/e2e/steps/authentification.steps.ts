@@ -6,7 +6,7 @@ let currentOidcAuthority = '';
 let redirectedToAuth = false;
 let callbackSeen = false;
 
-Given('que je ne suis pas authentifiée', async ({ page, appBaseUrl, oidcAuthority }) => {
+Given('je ne suis pas authentifiée', async ({ page, appBaseUrl, oidcAuthority }) => {
   currentAppBaseUrl = appBaseUrl;
   currentOidcAuthority = oidcAuthority;
   redirectedToAuth = false;
@@ -44,7 +44,7 @@ Then('aucune page de l\'application n\'est affichée', async ({ page }) => {
   expect(currentUrl.startsWith(currentAppBaseUrl)).toBeFalsy();
 });
 
-Given('que je viens de me connecter sur Popforge.Auth', async ({ page, appBaseUrl, oidcAuthority, testUserEmail, testUserPassword }) => {
+Given('je viens de me connecter sur Popforge.Auth', async ({ page, appBaseUrl, oidcAuthority, testUserEmail, testUserPassword }) => {
   currentAppBaseUrl = appBaseUrl;
   currentOidcAuthority = oidcAuthority;
   callbackSeen = false;
@@ -76,7 +76,7 @@ Given('que je viens de me connecter sur Popforge.Auth', async ({ page, appBaseUr
   }
 });
 
-When('je suis redirigée vers l\'application via le callback "/auth/callback"', async ({ page, appBaseUrl }) => {
+When('je suis redirigée vers l\'application via le callback {string}', async ({ page, appBaseUrl }, _callbackPath: string) => {
   // Ensure final navigation settles on the app domain.
   await page.waitForURL((url) => url.toString().startsWith(appBaseUrl), { timeout: 30000 });
 });
