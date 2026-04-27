@@ -49,6 +49,10 @@ jobs:
       - name: Create deploy.env payload
         shell: bash
         run: |
+          oidc_authority="${{ vars.MY_ACCOUNTING_OIDC_AUTHORITY }}"
+          if [ -z "${oidc_authority}" ]; then
+            oidc_authority="https://auth-beta.popsalon.app"
+          fi
           cat > deploy.env <<EOF
           MY_ACCOUNTING_API_TAG=${{ steps.tags.outputs.api_tag }}
           MY_ACCOUNTING_APP_TAG=${{ steps.tags.outputs.app_tag }}
@@ -57,7 +61,7 @@ jobs:
           MY_ACCOUNTING_APP_PORT=8096
           MY_ACCOUNTING_ASPNETCORE_ENVIRONMENT=Beta
           MY_ACCOUNTING_DB_CONNECTION=${{ secrets.MY_ACCOUNTING_DB_CONNECTION }}
-          MY_ACCOUNTING_OIDC_AUTHORITY=${{ vars.MY_ACCOUNTING_OIDC_AUTHORITY || 'https://auth-beta.popsalon.app' }}
+          MY_ACCOUNTING_OIDC_AUTHORITY=${oidc_authority}
           EOF
           sed -i 's/^[[:space:]]*//' deploy.env
 
@@ -102,9 +106,12 @@ jobs:
           command_timeout: 15m
           script: |
             set -euo pipefail
-            domain="${{ vars.MY_ACCOUNTING_BETA_DOMAIN || 'my-accounting-beta.popsalon.app' }}"
-            api_port="${{ vars.MY_ACCOUNTING_API_PORT || '8095' }}"
-            app_port="${{ vars.MY_ACCOUNTING_APP_PORT || '8096' }}"
+            domain="${{ vars.MY_ACCOUNTING_BETA_DOMAIN }}"
+            api_port="${{ vars.MY_ACCOUNTING_API_PORT }}"
+            app_port="${{ vars.MY_ACCOUNTING_APP_PORT }}"
+            domain="${domain:-my-accounting-beta.popsalon.app}"
+            api_port="${api_port:-8095}"
+            app_port="${app_port:-8096}"
 
             sudo tee "/etc/nginx/sites-available/${domain}" > /dev/null <<NGINXCONF
             server {
@@ -144,7 +151,8 @@ jobs:
           command_timeout: 15m
           script: |
             set -euo pipefail
-            domain="${{ vars.MY_ACCOUNTING_BETA_DOMAIN || 'my-accounting-beta.popsalon.app' }}"
+            domain="${{ vars.MY_ACCOUNTING_BETA_DOMAIN }}"
+            domain="${domain:-my-accounting-beta.popsalon.app}"
             if sudo test -d "/etc/letsencrypt/live/${domain}"; then
               echo "Certificate already exists for ${domain}; running renew and nginx reload."
               sudo certbot renew --non-interactive

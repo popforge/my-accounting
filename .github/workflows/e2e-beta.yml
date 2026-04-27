@@ -22,8 +22,8 @@ jobs:
     timeout-minutes: 20
 
     env:
-      BASE_URL: ${{ vars.MY_ACCOUNTING_BETA_BASE_URL || 'https://my-accounting-beta.popsalon.app' }}
-      OIDC_AUTHORITY: ${{ vars.MY_ACCOUNTING_OIDC_AUTHORITY || 'https://auth-beta.popsalon.app' }}
+      BASE_URL: ${{ vars.MY_ACCOUNTING_BETA_BASE_URL }}
+      OIDC_AUTHORITY: ${{ vars.MY_ACCOUNTING_OIDC_AUTHORITY }}
       OIDC_CLIENT_ID: my-accounting-cluster
       OIDC_SCOPE: openid email profile roles
       TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
@@ -37,6 +37,10 @@ jobs:
       - name: Validate required secrets
         shell: bash
         run: |
+          : "${BASE_URL:=https://my-accounting-beta.popsalon.app}"
+          : "${OIDC_AUTHORITY:=https://auth-beta.popsalon.app}"
+          echo "Using BASE_URL=${BASE_URL}"
+          echo "Using OIDC_AUTHORITY=${OIDC_AUTHORITY}"
           for name in TEST_USER_EMAIL TEST_USER_PASSWORD OIDC_CLIENT_SECRET; do
             if [ -z "${!name:-}" ]; then
               echo "Missing required beta secret: ${name}" >&2
