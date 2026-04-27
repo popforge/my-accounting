@@ -89,6 +89,8 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     environment: beta
+    env:
+      DEPLOY_PATH: /home/${{ vars.ORACLE_SSH_USERNAME }}/my-accounting
 
     steps:
       - name: Configure SSH key
@@ -102,78 +104,70 @@ jobs:
           ssh-keyscan -T 5 -H "${{ vars.ORACLE_SSH_HOST }}" >> ~/.ssh/known_hosts || true
           chmod 600 ~/.ssh/known_hosts
 
+      - name: Create nginx site config
+        shell: bash
+        run: |
+          set -euo pipefail
+          domain="${{ vars.MY_ACCOUNTING_BETA_DOMAIN }}"
+          api_port="${{ vars.MY_ACCOUNTING_API_PORT }}"
+          app_port="${{ vars.MY_ACCOUNTING_APP_PORT }}"
+          domain="${domain:-my-accounting-beta.popsalon.app}"
+          api_port="${api_port:-8095}"
+          app_port="${app_port:-8096}"
+          cat > my-accounting-beta.nginx.conf <<EOF
+          server {
+              listen 80;
+              server_name ${domain};
+
+              location / {
+                  proxy_pass http://127.0.0.1:${app_port};
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+              }
+
+              location /api/ {
+                  proxy_pass http://127.0.0.1:${api_port};
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+              }
+          }
+          EOF
+
+      - name: Copy nginx site config
+        shell: bash
+        run: |
+          set -euo pipefail
+          scp \
+            -o BatchMode=yes \
+            -o ConnectTimeout=12 \
+            -i ~/.ssh/id_ed25519 \
+            my-accounting-beta.nginx.conf \
+            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}:${{ env.DEPLOY_PATH }}/"
+
       - name: Ensure host nginx reverse proxy for my-accounting
         shell: bash
         run: |
+          set -euo pipefail
           ssh \
             -o BatchMode=yes \
             -o ConnectTimeout=12 \
             -o ServerAliveInterval=5 \
             -o ServerAliveCountMax=3 \
             -i ~/.ssh/id_ed25519 \
-            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}" <<'EOF'
-            set -euo pipefail
-            domain="${{ vars.MY_ACCOUNTING_BETA_DOMAIN }}"
-            api_port="${{ vars.MY_ACCOUNTING_API_PORT }}"
-            app_port="${{ vars.MY_ACCOUNTING_APP_PORT }}"
-            domain="${domain:-my-accounting-beta.popsalon.app}"
-            api_port="${api_port:-8095}"
-            app_port="${app_port:-8096}"
-
-            sudo tee "/etc/nginx/sites-available/${domain}" > /dev/null <<NGINXCONF
-            server {
-                listen 80;
-                server_name ${domain};
-
-                location / {
-                    proxy_pass http://127.0.0.1:${app_port};
-                    proxy_set_header Host \$host;
-                    proxy_set_header X-Forwarded-Proto \$scheme;
-                }
-
-                location /api/ {
-                    proxy_pass http://127.0.0.1:${api_port};
-                    proxy_set_header Host \$host;
-                    proxy_set_header X-Real-IP \$remote_addr;
-                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                    proxy_set_header X-Forwarded-Proto \$scheme;
-                }
-            }
-            NGINXCONF
-
-            sudo ln -sfn "/etc/nginx/sites-available/${domain}" "/etc/nginx/sites-enabled/${domain}"
-            if [ -f /etc/nginx/sites-enabled/default ]; then
-              sudo rm -f /etc/nginx/sites-enabled/default
-            fi
-            sudo nginx -t
-            sudo systemctl reload nginx
-            EOF
+            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}" \
+            "domain='${{ vars.MY_ACCOUNTING_BETA_DOMAIN }}'; domain=\${domain:-my-accounting-beta.popsalon.app}; sudo mv '${{ env.DEPLOY_PATH }}/my-accounting-beta.nginx.conf' '/etc/nginx/sites-available/\${domain}'; sudo ln -sfn '/etc/nginx/sites-available/\${domain}' '/etc/nginx/sites-enabled/\${domain}'; if [ -f /etc/nginx/sites-enabled/default ]; then sudo rm -f /etc/nginx/sites-enabled/default; fi; sudo nginx -t; sudo systemctl reload nginx"
 
       - name: Ensure HTTPS certificate on host nginx (Certbot)
         shell: bash
         run: |
+          set -euo pipefail
           ssh \
             -o BatchMode=yes \
             -o ConnectTimeout=12 \
             -o ServerAliveInterval=5 \
             -o ServerAliveCountMax=3 \
             -i ~/.ssh/id_ed25519 \
-            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}" <<'EOF'
-            set -euo pipefail
-            certbot_email="${{ secrets.CERTBOT_EMAIL }}"
-            if [ -z "${certbot_email}" ]; then
-              echo "CERTBOT_EMAIL not configured, skipping certbot step."
-              exit 0
-            fi
-            domain="${{ vars.MY_ACCOUNTING_BETA_DOMAIN }}"
-            domain="${domain:-my-accounting-beta.popsalon.app}"
-            if sudo test -d "/etc/letsencrypt/live/${domain}"; then
-              echo "Certificate already exists for ${domain}; running renew and nginx reload."
-              sudo certbot renew --non-interactive
-            else
-              echo "Issuing new certificate for ${domain}."
-              sudo certbot --nginx -d "${domain}" --non-interactive --agree-tos -m "${certbot_email}" --redirect
-            fi
-            sudo nginx -t
-            sudo systemctl reload nginx
-            EOF
+            "${{ vars.ORACLE_SSH_USERNAME }}@${{ vars.ORACLE_SSH_HOST }}" \
+            "certbot_email='${{ secrets.CERTBOT_EMAIL }}'; if [ -z \"\${certbot_email}\" ]; then echo 'CERTBOT_EMAIL not configured, skipping certbot step.'; exit 0; fi; domain='${{ vars.MY_ACCOUNTING_BETA_DOMAIN }}'; domain=\${domain:-my-accounting-beta.popsalon.app}; if sudo test -d '/etc/letsencrypt/live/\${domain}'; then echo \"Certificate already exists for \${domain}; running certbot --nginx to bind it to the correct vhost.\"; sudo certbot --nginx -d '\${domain}' --non-interactive --agree-tos -m '\${certbot_email}' --redirect --reinstall; else echo \"Issuing new certificate for \${domain}.\"; sudo certbot --nginx -d '\${domain}' --non-interactive --agree-tos -m '\${certbot_email}' --redirect; fi; sudo nginx -t; sudo systemctl reload nginx"
