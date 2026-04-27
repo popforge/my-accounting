@@ -1,4 +1,4 @@
-name: Publish MyAccounting Images
+﻿name: Publish MyAccounting Images
 
 on:
   push:
@@ -48,9 +48,6 @@ jobs:
           fi
 
           {
-            echo "api_image=${api_image}"
-            echo "app_image=${app_image}"
-            echo "sha_tag=sha-${short_sha}"
             echo "api_tags<<EOF"
             echo "${api_image}:sha-${short_sha}"
             echo "${api_image}:${version_tag}"
@@ -66,8 +63,8 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
 
           {
-            echo "MY_ACCOUNTING_API_TAG=sha-${short_sha}"
-            echo "MY_ACCOUNTING_APP_TAG=sha-${short_sha}"
+            echo "API_TAG=sha-${short_sha}"
+            echo "APP_TAG=sha-${short_sha}"
           } > image-tags.env
 
       - name: Build and push API
@@ -88,7 +85,7 @@ jobs:
           tags: ${{ steps.tags.outputs.app_tags }}
           labels: ${{ steps.tags.outputs.labels }}
           secrets: |
-            "npm_token=${{ secrets.GITHUB_TOKEN }}"
+            npm_token=${{ secrets.NPM_TOKEN }}
 
       - name: Upload image tags artifact
         uses: actions/upload-artifact@v4
