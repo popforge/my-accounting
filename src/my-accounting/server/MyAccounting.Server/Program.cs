@@ -26,7 +26,7 @@ app.UseCors(ClusterCorsExtensions.PolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseClusterOpenApiUi();
-app.MapHealthChecks("/health").AllowAnonymous();
+app.UseClusterHealthEndpoints();
 app.MapControllers();
 
 app.Run();
