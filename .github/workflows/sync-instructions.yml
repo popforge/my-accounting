@@ -1,0 +1,15 @@
+name: Sync Copilot Instructions
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  sync:
+    uses: popforge/Popforge.Shared/.github/workflows/reusable-sync-instructions.yml@main
+    with:
+      cluster_name: MyAccounting
+      cluster_slug: my-accounting
+      epic_prefix: m
+    secrets: inherit
