@@ -1,12 +1,13 @@
 ---
-version: 1.2
+version: 1.3
 status: ACTIVE
 author: Rachel (Product Lead)
 date: 2026-05-01
 objective: Standardiser la complétude d'une user story avant merge/production
 audience: Tout développeur travaillant dans ce repos
 changelog:
-  - "1.2 (2026-05-01) : Ajout règle universelle AC→xUnit (3a), section 5 recette exécutée, section 5.5 (canal cross-cluster). Retro Sprint 01."
+  - "1.3 (2026-05-01) : Section 5 — référence explicite au fichier recette-epic-NN.md. Retro Sprint 01 — action item."
+  - "1.2 (2026-05-01) : Ajout section 4.5 (recette manuelle exécutée), section 5.5 (infra cross-cluster smoke). Retro Sprint 01."
 ---
 
 # Definition of Done — User Stories
@@ -29,7 +30,7 @@ Une **user story est complète et prête pour production** si et seulement si **
 
 ### 2. Tranche verticale — Toutes les couches livrées ✓
 
-- [ ] **UI** : comportements interactifs, messages d'erreur et états de chargement implémentés conformément à l'esquisse de la story et aux standards `docs/architecture/ux-standards.md`
+- [ ] **UI** : comportements interactifs, messages d'erreur et états de chargement implémentés conformément à l'esquisse de la story et aux standards `docs/product/UX-UI/ux-ui-standards.md`
 - [ ] **API** : tous les endpoints documentés dans la story sont implémentés avec les bons codes HTTP, payloads et messages d'erreur
 - [ ] **Base de données** : tables, colonnes, contraintes et migrations EF Core créées et appliquées
 - [ ] **Déploiement** : toutes les variables d'environnement requises sont documentées et configurées dans l'environnement beta
@@ -38,12 +39,13 @@ Une **user story est complète et prête pour production** si et seulement si **
 
 ### 3. Tests automatisés ✓
 
-#### Stories avec UI (flux utilisateur)
+#### Stories avec UI (flux utilisateur observable dans un navigateur)
 - [ ] **≥ 1 fichier `.feature` Gherkin** (fr-CA) couvrant le workflow utilisateur principal
 - [ ] Scénarios incluent le **happy path** + **≥ 1 cas d'erreur principal**
 - [ ] Tests **isolés** — pas de pollution d'état entre scénarios
 - [ ] Waits fiables — `waitForSelector` / `waitForURL` — aucun `sleep` ou timeout arbitraire
-- [ ] Tous les scénarios passent en CI ✓
+- [ ] **`npm run test:e2e` passe en vert** depuis le projet E2E du cluster ✓ (pas seulement un fichier `.feature` présent — le runner doit exécuter les scénarios avec succès)
+- [ ] Le job **`smoke-e2e` du pipeline `deploy-beta.yml` passe en vert** après déploiement ✓
 
 #### Stories Infrastructure ou API M2M sans UI
 > Exception alignée avec le DOR section 4 — les scénarios Gherkin E2E sont remplacés par des tests xUnit.
@@ -72,24 +74,23 @@ Une **user story est complète et prête pour production** si et seulement si **
 
 ### 5. Validation en environnement beta ✓
 
-- [ ] La story a été **déployée sur beta**
-- [ ] La **recette manuelle** (section « Validation manuelle » de la story) a été **exécutée** par Rachel : chaque scénario coché ✅ ou ❌ avec notes
-- [ ] La story est marquée `Done` uniquement après approbation de Rachel en beta
-
----
+- [ ] La story a été **déployée sur beta** (`my-accounting-beta.popsalon.app`)
+- [ ] La **recette manuelle** a été **exécutée** par Rachel : tous les scénarios de la section correspondante dans `docs/product/stories/recettes/recette-epic-NN.md` cochés ✅ ou ❌ avec notes
+- [ ] La story est marquée `Done` uniquement après approbation de Rachel dans le fichier recette (`recette-epic-NN.md` — section de la story signée)
 
 ### 5.5. Canal cross-cluster — smoke test ✓
 > S'applique uniquement si la story utilise un canal inter-cluster (M2M, provisioning, etc.)
 
 - [ ] Le canal est validé opérationnel en beta **avant** de marquer Done : token M2M obtenu, appel Admin API retourne 2xx
-- [ ] Si un bug d'infrastructure cross-cluster a été corrigé durant la story, un test xUnit est ajouté pour le couvrir
-- [ ] Les clusters **en aval** sont vérifiés non régressés
+- [ ] Si un bug d'infrastructure cross-cluster a été corrigé durant la story, un test xUnit est ajouté pour le couvrir (évite régression silencieuse)
+- [ ] Les clusters **en aval** (ex. : Auth quand Hub est modifié) sont vérifiés non régressés
 
 ---
 
 ## Résumé : Checklist Rapide DOD
 
 ```
+AC
 [ ] Tous les AC implémentés et vérifiables
 
 TRANCHE VERTICALE
@@ -106,5 +107,6 @@ QUALITÉ
 [ ] Revue de code effectuée + commentaires résolus
 
 VALIDATION
-[ ] Déployé en beta + recette manuelle approuvée par Rachel
+[ ] Déployé en beta + recette dans docs/product/stories/recettes/recette-epic-NN.md complétée et signée par Rachel
+[ ] Si cross-cluster : smoke test canal + clusters aval vérifiés non régressés
 ```
