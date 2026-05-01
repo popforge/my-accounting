@@ -118,6 +118,10 @@ This propagation is **not optional** — an agent working on MyAccounting or Pop
 
 ## File Naming Convention
 
-- `docs/agile-framework/sprints/YYYY-MM-DD-sprint-NN-review.md`
-- `docs/agile-framework/sprints/YYYY-MM-DD-sprint-NN-retro.md`
-- `docs/agile-framework/sprints/YYYY-MM-DD-sprint-NN-retro-brouillon.md` (draft, not committed as final)
+```
+docs/agile-framework/sprints/sprint-NN-YYYY-MM-DD/
+    sprint-NN-YYYY-MM-DD.yaml
+    sprint-NN-review.md
+    sprint-NN-retro.md
+    sprint-NN-retro-brouillon.md   (draft, not committed as final)
+```
