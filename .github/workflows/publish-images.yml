@@ -1,4 +1,4 @@
-name: Publish MyAccounting Images
+﻿name: Publish MyAccounting Images
 
 on:
   push:
@@ -100,3 +100,13 @@ jobs:
           name: image-tags
           path: image-tags.env
           retention-days: 1
+
+      - name: Notify popsalon-infra (deploy)
+        if: github.ref == 'refs/heads/main'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.INFRA_DISPATCH_TOKEN }}
+          repository: popforge/popsalon-infra
+          event-type: image-published
+          client-payload: >-
+            {"cluster":"myaccounting","tag":"${{ steps.meta.outputs.tag }}","sha":"${{ github.sha }}","ref":"${{ github.ref }}"}
