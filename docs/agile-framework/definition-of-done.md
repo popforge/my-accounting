@@ -1,10 +1,12 @@
 ---
-version: 1.1
+version: 1.2
 status: ACTIVE
 author: Rachel (Product Lead)
-date: 2026-04-25
+date: 2026-05-01
 objective: Standardiser la complétude d'une user story avant merge/production
 audience: Tout développeur travaillant dans ce repos
+changelog:
+  - "1.2 (2026-05-01) : Ajout règle universelle AC→xUnit (3a), section 5 recette exécutée, section 5.5 (canal cross-cluster). Retro Sprint 01."
 ---
 
 # Definition of Done — User Stories
@@ -50,6 +52,13 @@ Une **user story est complète et prête pour production** si et seulement si **
 - [ ] Tests d'idempotence couverts si applicable (ex : seed workers)
 - [ ] Tous les tests xUnit passent en CI ✓
 
+#### Règle universelle — AC marqués xUnit (toutes stories)
+> S'applique à toutes les stories, avec ou sans UI.
+
+- [ ] Tout AC dont le type de test est `Unit (xUnit)` dans le story spec a **≥ 1 test xUnit écrit dans `tests/unit/`** et passant en CI
+- [ ] Tout AC dont le type de test est `Intégration (xUnit)` dans le story spec a **≥ 1 test xUnit écrit dans `tests/integration/`** et passant en CI
+- [ ] Les tests xUnit sont écrits **après les tests E2E** et couvrent la logique interne non observable par Gherkin
+
 ---
 
 ### 4. Qualité du code ✓
@@ -64,8 +73,17 @@ Une **user story est complète et prête pour production** si et seulement si **
 ### 5. Validation en environnement beta ✓
 
 - [ ] La story a été **déployée sur beta**
-- [ ] La **recette manuelle** (section « Validation manuelle » de la story) a été complétée par Rachel
+- [ ] La **recette manuelle** (section « Validation manuelle » de la story) a été **exécutée** par Rachel : chaque scénario coché ✅ ou ❌ avec notes
 - [ ] La story est marquée `Done` uniquement après approbation de Rachel en beta
+
+---
+
+### 5.5. Canal cross-cluster — smoke test ✓
+> S'applique uniquement si la story utilise un canal inter-cluster (M2M, provisioning, etc.)
+
+- [ ] Le canal est validé opérationnel en beta **avant** de marquer Done : token M2M obtenu, appel Admin API retourne 2xx
+- [ ] Si un bug d'infrastructure cross-cluster a été corrigé durant la story, un test xUnit est ajouté pour le couvrir
+- [ ] Les clusters **en aval** sont vérifiés non régressés
 
 ---
 

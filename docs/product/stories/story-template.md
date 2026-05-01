@@ -4,6 +4,29 @@
 
 En tant que [persona — voir docs/product/personas.md], je veux [action] afin de [bénéfice mesurable].
 
+**Dépend de :** Story X.A, Story X.B *(supprimer si aucune)*
+
+---
+
+## Prérequis et dépendances
+
+### Stories bloquantes
+
+| Story | Description | Pourquoi requis |
+|-------|-------------|-----------------|
+| Story X.A | [Titre] | [Ce que cette story fournit et dont cette story a besoin] |
+
+> S'il n'y a pas de story bloquante, écrire « Aucune ».
+
+### Prérequis infrastructure cross-cluster
+> Remplir uniquement si la story active ou utilise un canal inter-cluster (M2M, provisioning, etc.)
+
+- [ ] Canal [Cluster A] → [Cluster B] validé opérationnel en beta
+- [ ] Endpoint `[GET/POST /api/...]` existe et répond dans [Cluster cible] en beta
+- [ ] Variables d'environnement cross-cluster configurées : `[VAR_NAME]` dans [Cluster]
+
+> **Règle DOR** : si un canal cross-cluster est requis et non encore validé, créer une spike technique avant de démarrer cette story.
+
 ---
 ## Diagramme de flux (Mermaid)
 ```mermaid

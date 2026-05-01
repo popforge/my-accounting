@@ -1,8 +1,10 @@
 ---
-version: 1.0
+version: 1.1
 status: ACTIVE
-date: 2026-04-24
+date: 2026-05-01
 owner: Bob (Scrum Master) / Rachel (Product Lead)
+changelog:
+  - "1.1 (2026-05-01) : Ajout section 10 (recette manuelle préparée), section 11 (validation canal cross-cluster). Retro Sprint 01."
 ---
 
 # Definition of Ready — User Stories
@@ -71,6 +73,23 @@ Une story est **prête à entrer en développement** si et seulement si tous les
 
 - [ ] Les **données de test nécessaires** sont identifiées (comptes de test, créneaux, prestations, clientes)
 - [ ] Si la story nécessite des données spécifiques, elles sont **décrites dans les AC** ou dans une note de test
+
+### 10. Recette manuelle préparée ✓
+
+- [ ] Les **scénarios de recette manuelle** (section « Validation manuelle » du story template) sont rédigés et approuvés par Rachel **avant** le début du développement
+- [ ] Chaque AC observable a au moins **1 scénario de recette** identifié
+- [ ] Les **données de test nécessaires à la recette** sont identifiées
+
+> **Pourquoi dans le DOR :** Savoir quoi tester manuellement avant de coder guide l'implémentation et évite les oublis de cas d'utilisation.
+
+### 11. Validation canal cross-cluster ✓
+> S'applique uniquement aux stories qui activent un canal inter-cluster pour la **première fois**.
+
+- [ ] Les endpoints cross-cluster requis existent et répondent correctement en beta (test curl documenté)
+- [ ] L'authentification M2M est validée manuellement avant le début du développement
+- [ ] Si le canal n'est pas encore opérationnel en beta, une spike technique est créée et complétée **avant** la story
+
+> **Pourquoi dans le DOR :** Activer un canal cross-cluster non validé introduit des bugs d'infrastructure silencieux découverts seulement en E2E.
 
 ---
 

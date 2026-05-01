@@ -105,6 +105,25 @@ public class ExempleServiceTests { ... }
 - Chaque test d'intégration doit laisser la base dans l'état initial (rollback ou suppression explicite).
 - Regrouper les tests qui partagent une même fixture dans une `IClassFixture<DatabaseFixture>`.
 
+### Règle de dérivation AC → artefact de test
+
+Pour chaque AC du story spec, le type de test indiqué crée une **obligation de livraison** :
+
+| Type dans l'AC | Artefact obligatoire |
+|---|---|
+| `Acceptance Gherkin` | Scénario dans le fichier `.feature` correspondant |
+| `Unit (xUnit)` | Méthode de test dans `{Classe}Tests.cs` sous `tests/unit/` |
+| `Intégration (xUnit)` | Méthode de test dans `{Classe}Tests.cs` sous `tests/integration/` |
+| `Manuel` | Scénario dans la section « Validation manuelle — Recette » de la story |
+
+Un AC marqué `Unit (xUnit)` ou `Intégration (xUnit)` sans test correspondant écrit et passant en CI est un **blocage DOD**.
+
+### Séquencement des tests par story
+
+1. **E2E Gherkin en premier** — écrire et valider les scénarios `.feature` qui couvrent les comportements observables (flux utilisateur, états visibles)
+2. **xUnit ensuite** — pour chaque AC marqué `Unit` ou `Intégration`, écrire le test xUnit correspondant après les E2E
+3. Les tests xUnit **complètent** les E2E sur la logique interne (validations, règles métier, cas d'erreur backend) — ils ne les remplacent pas
+
 ### Règles générales
 
 - Un test ne valide qu'un seul comportement observable.

@@ -19,6 +19,17 @@ Le projet MyAccounting suit une stratégie de test orientée risque avec sépara
 - Ne pas dupliquer un même flux en Gherkin et en test d'intégration sans raison claire.
 - Réserver les scénarios Gherkin aux flux utilisateur observables dans un navigateur.
 
+### Dérivation obligatoire AC → niveau de test
+
+Lors de la rédaction d'une story, chaque AC **doit indiquer son type de test** en italique. Ce type crée une obligation :
+
+- `Acceptance Gherkin` → scénario `.feature` obligatoire avant le développement (DOR)
+- `Unit (xUnit)` → test xUnit obligatoire dans `tests/unit/`, écrit après les E2E
+- `Intégration (xUnit)` → test xUnit obligatoire dans `tests/integration/`, écrit après les E2E
+- `Manuel` → scénario dans la recette manuelle de la story, exécuté par Rachel avant Done
+
+Un AC sans type de test est **invalide** et bloque le DOR.
+
 ### Définition de qualité minimale
 
 Chaque test doit être :
