@@ -88,29 +88,17 @@ Voir : `src/{ClusterName}/tests/e2e/features/[feature-file].feature`
 
 ---
 
-## Validation manuelle — Recette (à remplir post-déploiement)
+## Validation manuelle — Recette
 
-> À compléter par Rachel sur l'environnement déployé (preview/staging/prod) avant de marquer la story `Done`.
+> La recette de cette story est dans le fichier de recette de l'épic :
+> `docs/product/stories/recettes/recette-epic-NN.md` — section "Story X.Y"
+>
+> Le gabarit est disponible dans `docs/product/stories/recettes/recette-template.md`.
+>
+> La story n'est `Done` que lorsque Rachel a rempli et signé la section correspondante dans ce fichier.
 
-**Date de recette :** _______________  
-**Validée par :** _______________  
-**Environnement testé :** ☐ Preview  ☐ Staging  ☐ Production  
-
-### Scénarios vérifiés manuellement
-
-| # | Scénario | Résultat | Notes |
-|---|---|---|---|
-| 1 | [AC1 — description courte — cas nominal] | ☐ Passe  ☐ Échoue | |
-| 2 | [AC2 — description courte — cas nominal] | ☐ Passe  ☐ Échoue | |
-| 3 | [Cas d'erreur principal — message affiché correct] | ☐ Passe  ☐ Échoue | |
-
-### Résultat global
-
-- ☐ **Approuvée** — tous les scénarios passent, story marquée `Done`
-- ☐ **Rejetée** — voir notes ci-dessous, retour en développement
-
-**Notes / Anomalies observées :**
-> 
+**Scénarios bloqués** (ne peuvent pas être validés sans story prérequise) :
+> Ex. : Scénario "premier login → force changement de mot de passe" — dépend de Auth A1.3 (backlog). À re-tester après livraison.
 
 ---
 
