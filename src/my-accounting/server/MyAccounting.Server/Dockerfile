@@ -13,5 +13,7 @@ RUN dotnet publish "MyAccounting.Server.csproj" -c Release -o /app/publish /p:Us
 
 # Hérite de ghcr.io/popforge/base-api — voir Popforge.Shared/docker/base-api/
 FROM ghcr.io/popforge/base-api:10.0 AS final
+# Label requis par Kamal pour identifier les conteneurs du service
+LABEL service=my-accounting-api
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "MyAccounting.Server.dll"]
