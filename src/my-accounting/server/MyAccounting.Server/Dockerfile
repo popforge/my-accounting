@@ -1,6 +1,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY . .
+# Crée un dossier local-nuget vide pour que NuGet ne plante pas sur la source locale (non disponible en CI)
+RUN mkdir -p /Popforge.Shared/local-nuget
 # Authentification GitHub Packages via BuildKit secret (injecté par le workflow CI)
 RUN --mount=type=secret,id=nuget_token \
     dotnet nuget add source https://nuget.pkg.github.com/popforge/index.json \

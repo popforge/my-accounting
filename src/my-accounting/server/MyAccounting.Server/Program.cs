@@ -1,4 +1,4 @@
-using Popforge.AspNetCore.Extensions.Authentication;
+using Popforge.Auth.Client.Authentication;
 using Popforge.AspNetCore.Extensions.Cors;
 using Popforge.AspNetCore.Extensions.HealthChecks;
 using Popforge.AspNetCore.Extensions.Logging;
