@@ -1,0 +1,22 @@
+# instructions-sources.yaml
+# Déclare les sources d'instructions GitHub Copilot à synchroniser dans ce repo.
+#
+# RÈGLE : ne jamais modifier les fichiers dans les sous-répertoires shared/, infra/, components/
+# directement — toujours modifier dans le repo source puis synchroniser.
+#
+# Pour synchroniser :
+#   cd C:\sources\rachellavoie\Popforge.MyAccounting
+#   & $env:POPFORGE_REPOS_ROOT\Popforge.Shared\scripts\sync-instructions.ps1
+
+consumes:
+  - source_repo: Popforge.Shared
+    source_path: .github/instructions/for-consumers/
+    destination: .github/instructions/shared/
+
+  - source_repo: popsalon-infra
+    source_path: .github/instructions/for-consumers/
+    destination: .github/instructions/infra/
+
+  - source_repo: Popforge.Components
+    source_path: .github/instructions/for-consumers/
+    destination: .github/instructions/components/
