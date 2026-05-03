@@ -69,7 +69,7 @@ Context items that sprint planning must account for.
 
 **No story may be marked `Done` without:**
 
-- [ ] All ACs marked `Acceptance Gherkin` have corresponding E2E tests passing in CI
+- [ ] All ACs marked `E2E Gherkin` have corresponding E2E tests passing in CI
 - [ ] All ACs marked `Unit (xUnit)` or `Intégration (xUnit)` have corresponding tests passing in CI
 - [ ] **Recette transmitted to Rachel** — manual test scenarios extracted from story spec and sent to Rachel
 - [ ] **Items blocked by other stories explicitly flagged** — Rachel knows which scenarios she cannot yet validate and why

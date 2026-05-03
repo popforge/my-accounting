@@ -5,7 +5,7 @@ applyTo: "src/**/*.{cs}"
 ## Tests backend — Domaine MyAccounting
 
 > Ce fichier contient les conventions de test spécifiques au domaine MyAccounting.
-> Il complète `testing-backend.instructions.md` (géré par `@popforge/sync`).
+> Il complète `shared/testing/testing-backend.instructions.md` (synchronisé depuis Popforge.Shared).
 > Ne pas modifier sans raison — ce fichier ne sera PAS écrasé lors des syncs.
 
 ### Structure des tests MyAccounting
