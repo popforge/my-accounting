@@ -1,23 +1,40 @@
 {
-    "files.exclude": {
+  "files.exclude": {
+  },
+  "search.exclude": {
+  },
+  "search.useIgnoreFiles": true,
+  "explorer.excludeGitIgnore": true,
+  "chat.promptFilesLocations": {
+    ".github/prompts": true
+  },
+  "chat.instructionsFilesLocations": {
+    ".github/instructions": true,
+    ".github/instructions/shared/agile": true,
+    ".github/instructions/shared/testing": true,
+    ".github/instructions/shared/platform": true,
+    ".github/instructions/shared/packages": true,
+    ".github/instructions/infra": true,
+    ".github/instructions/components/platform": true,
+    ".github/instructions/auth": true,
+    ".github/instructions/hub": true
+  },
+  "chat.modeFilesLocations": {
+    ".github/agents": true
+  },
+  // === Agent mode ===
+  "chat.agent.maxRequests": 200,
+  // === Markdown (édition des pages wiki) ===
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "on"
     },
-    "search.exclude": {
-    },
-    "search.useIgnoreFiles": true,
-    "explorer.excludeGitIgnore": true,
-    "chat.promptFilesLocations": {
-        ".github/prompts": true
-    },
-    "chat.instructionsFilesLocations": {
-        ".github/instructions": true,
-        ".github/instructions/agile-framework": true
-    },
-    "chat.modeFilesLocations": {
-        ".github/agents": true
-    },
-    // === Agent mode ===
-    "chat.agent.maxRequests": 200,
-    // === Divers ===
-    "files.encoding": "utf8",
-    "files.eol": "\n"
+    "files.trimTrailingWhitespace": false
+  },
+  // === Divers ===
+  "files.encoding": "utf8",
+  "files.eol": "\n"
 }

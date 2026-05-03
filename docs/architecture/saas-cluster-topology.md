@@ -1,7 +1,7 @@
-# Topologie SaaS - Écosystème MyAccounting
+# Topologie SaaS — Tous les Clusters
 
-> Document de référence pour les décisions de déploiement de MyAccounting.
-> Lire ce document avant toute modification de cluster, URL, port, routage ou authentification.
+> **Document de référence pour tous les agents IA.**
+> Lire ce document avant d'implémenter quoi que ce soit qui touche à un cluster, une URL, un port ou un déploiement.
 
 ---
 
@@ -9,16 +9,18 @@
 
 | Terme | Définition |
 |-------|------------|
+| Microservice | Service backend spécialisé dans une fonctionnalité métier spécifique, communiquant avec d'autres services via des API |
 | Cluster | Unité déployable composée d'une SPA, d'une API et de ses dépendances runtime |
 | Single-tenant | Une seule utilisatrice et un seul espace de données |
-| Multi-tenant | Plusieurs clients isolés sur la même plateforme |
+| Multi-tenant | Plusieurs locataires/entreprises isolés sur la même plateforme |
 
 ---
 
 ## Environnements
 
-- beta : environnement de développement et tests
-- production : environnement principal d'utilisation
+Development is available across two isolated environments:
+- beta : environnement de développement et tests manuels et automatisés
+- production : environnement principal d'utilisation par les clients
 
 ---
 
@@ -29,37 +31,39 @@ Format general de l'ecosysteme existant :
 https://[cluster][-env].popsalon.app/[tenantCode]
 
 Regles :
-- `-env` est omis en production
-- `tenantCode` est present uniquement pour les clusters multi-tenant
+- cluster: nom du cluster SAAS déployé (e.g., "hub", "auth")
+- `-env` : nom de l'environnement (omis en production)
+- `tenantCode` : présent uniquement pour les clusters multi-tenant
 - les clusters non multi-tenant n'utilisent pas de tenant dans l'URL
 
 Structure standard (hors exceptions) :
 
 ```
 https://[cluster]-beta.popsalon.app/
-├── /                     -> Frontend SPA
-├── /api/*                -> Backend API
-├── /swagger/index.html   -> Swagger UI
-└── /docs/*               -> Documentation utilisateur
+├── /                     → Frontend SPA
+├── /api/*                → Backend API
+├── /api/health/live      → Backend API retourne 200 OK si vivant (health check)
+├── /api/health/ready     → Backend API retourne 200 OK si prêt à recevoir du trafic, après migration (health check)
+├── /api-docs/index.html  → Swagger UI
+└── /docs/*               → User documentation
 ```
 
 ---
 
-## Topologie des clusters (plateforme partagée)
+# Topologie de tous les clusters
 
-| Cluster | Production | Beta | Multi-tenant | Rôle |
-|---------|------------|------|--------------|------|
-| popsalon | popsalon.app | beta.popsalon.app | Oui | Produit SaaS salon |
-| hub | hub.popsalon.app | hub-beta.popsalon.app | Non | Services centraux plateforme |
-| auth | auth.popsalon.app | auth-beta.popsalon.app | Non | Serveur OIDC OpenIddict |
-| my-accounting | my-accounting.popsalon.app | my-accounting-beta.popsalon.app | Non (V1) | Application comptabilité personnelle et locative |
+| Cluster        | Production                  | Beta                   | Multi-tenant | Rôle                                             |
+|----------------|-----------------------------|------------------------|--------------|--------------------------------------------------|
+| popsalon       | popsalon.app                | beta.popsalon.app               | Oui | Produit SaaS salon                               |
+| hub 	         | hub.popsalon.app            | hub-beta.popsalon.app           | Non | Services centraux plateforme                     |
+| auth 	         | auth.popsalon.app           | auth-beta.popsalon.app          | Non | Serveur OIDC OpenIddict                          |
+| my-accounting  | my-accounting.popsalon.app  | my-accounting-beta.popsalon.app | Non | Application comptabilité personnelle et locative |
 
 ---
 
 ## Positionnement de MyAccounting
 
 - MyAccounting réutilise l'infrastructure et les standards de la plateforme existante
-- V1 en single-tenant (usage personnel)
 - Authentification déléguée au cluster `auth`
 - Les documents sources restent dans iCloud, avec index applicatif pour la recherche rapide
 - Exposition en sous-domaine dédié
@@ -68,17 +72,17 @@ https://[cluster]-beta.popsalon.app/
 
 ---
 
-## Chemins spécifiques du cluster auth
+## Chemins spécifiques au cluster `auth`
 
-Le cluster `auth` suit les endpoints OIDC standards :
+Le cluster `auth` n'utilise pas la structure standard (`/api/*`, `/swagger/`). Ses chemins sont définis par le protocole OIDC :
 
 ```
 https://auth.popsalon.app/
-├── /                                   -> UI de login
-├── /connect/authorize                  -> Début du flux OIDC
-├── /connect/token                      -> Échange code vers token
-├── /connect/userinfo                   -> Claims utilisateur
-└── /.well-known/openid-configuration   -> Endpoint discovery
+├── /                                    → UI de login unifiée (email + password)
+├── /connect/authorize                   → Démarrage du flux OIDC (redirect)
+├── /connect/token                       → Échange code → JWT
+├── /connect/userinfo                    → Claims utilisateur
+└── /.well-known/openid-configuration    → Discovery endpoint
 ```
 
 ---
