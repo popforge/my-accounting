@@ -43,6 +43,8 @@ jobs:
           cache-dependency-path: src/my-accounting/tests/e2e/package-lock.json
 
       - name: Install dependencies
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
         run: npm ci
 
       - name: Install Playwright browser

@@ -43,14 +43,14 @@ jobs:
       - name: Build and push API image
         shell: bash
         env:
-          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+          REGISTRY_READ_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN != '' && secrets.PACKAGES_READ_TOKEN || secrets.GHCR_READ_TOKEN }}
           NUGET_AUTHTOKEN: ${{ secrets.NUGET_AUTHTOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
           # Pull shared base image with read-only package token.
-          echo "${GHCR_READ_TOKEN}" | docker login ghcr.io -u popforge --password-stdin
+          echo "${REGISTRY_READ_TOKEN}" | docker login ghcr.io -u popforge --password-stdin
           docker pull ghcr.io/popforge/base-api:10.0
           docker logout ghcr.io
 
@@ -66,14 +66,14 @@ jobs:
       - name: Build and push App image
         shell: bash
         env:
-          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+          REGISTRY_READ_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN != '' && secrets.PACKAGES_READ_TOKEN || secrets.GHCR_READ_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
           # Pull shared base image with read-only package token.
-          echo "${GHCR_READ_TOKEN}" | docker login ghcr.io -u popforge --password-stdin
+          echo "${REGISTRY_READ_TOKEN}" | docker login ghcr.io -u popforge --password-stdin
           docker pull ghcr.io/popforge/base-nginx:latest
           docker logout ghcr.io
 

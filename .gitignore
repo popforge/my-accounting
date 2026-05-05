@@ -1,6 +1,8 @@
 # BMAD
 _bmad
 .github/skills/bmad-*
+!.github/skills/bmad-dev-story/
+!.github/skills/bmad-dev-story/**
 .agents/skills/bmad-*
 
 # Secrets locaux — jamais dans git
