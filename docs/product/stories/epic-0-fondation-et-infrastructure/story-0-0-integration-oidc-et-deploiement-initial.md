@@ -1,6 +1,6 @@
 # Story 0.0 — Intégration OIDC et déploiement initial
 
-**Statut :** `ready-for-dev`
+**Statut :** `done`
 
 En tant que Rachel, je veux pouvoir me connecter à mon application de comptabilité avec mon compte Popforge existant et être assurée qu'aucune donnée n'est accessible sans session valide, afin d'avoir un accès sécurisé dès la première utilisation.
 

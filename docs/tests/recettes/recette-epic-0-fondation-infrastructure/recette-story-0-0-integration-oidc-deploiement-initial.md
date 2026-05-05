@@ -81,15 +81,15 @@
 
 | # | Action | Résultat attendu | ☐/☑ | Notes |
 |---|--------|-----------------|-----|-------|
-| 1 | Naviguer vers `https://my-accounting-beta.popsalon.app/api-docs/` | La page Swagger UI s'affiche (même sans session) | ☐ | Après prochain déploiement — bug nginx corrigé |
+| 1 | Naviguer vers `https://my-accounting-beta.popsalon.app/api-docs/` | La page Swagger UI s'affiche (même sans session) | ☑ | Bug nginx corrigé (2026-05-05) |
 
-**Résultat TC-0.0-05 :** ☐ Passe  ☐ Échoue — ⏳ En attente du prochain déploiement
+**Résultat TC-0.0-05 :** ☑ Passe  ☐ Échoue
 
 ---
 
 ## Résultat Story 0.0
 
-**Date de recette :** 2026-05-04
+**Date de recette :** 2026-05-05
 **Validée par :** Rachel Lavoie
 **Environnement testé :** ☑ Beta  ☐ Production
 
@@ -99,16 +99,13 @@
 | TC-0.0-02 | Connexion compte Popforge | ☑ Passe  ☐ Échoue |
 | TC-0.0-03 | Déconnexion + protection de session | ☑ Passe  ☐ Échoue |
 | TC-0.0-04 | API 401 sans token (curl) | ☑ Passe  ☐ Échoue |
-| TC-0.0-05 | Swagger UI accessible (bonus) | ☐ Passe  ☐ Échoue — ⏳ après déploiement |
+| TC-0.0-05 | Swagger UI accessible (bonus) | ☑ Passe  ☐ Échoue |
 
-- ☐ **Approuvée** — tous les TC passent, story marquée `Done`
-- ☑ **Approuvée partiellement** — voir items bloqués ci-dessous
+- ☑ **Approuvée** — tous les TC passent, story marquée `Done`
+- ☐ **Approuvée partiellement** — voir items bloqués ci-dessous
 - ☐ **Rejetée** — retour en développement, voir notes ci-dessous
 
-**Items bloqués :**
-> TC-0.0-E2E (steps Gherkin `authentification.steps.ts`) — différé : fixture `auth-session` en attente secrets GitHub Actions. Non bloquant pour la recette manuelle.
->
-> TC-0.0-05 (bonus hors AC) — page `/swagger/index.html` blanche : assets Swashbuckle non chargés en production (nginx ou middleware). Bug à corriger, non bloquant pour marquer la story Done (hors AC).
+**Items bloqués :** Aucun
 
 **Notes / Anomalies observées :**
 > - Page d'accueil affiche « My Accounting — Authentification OIDC active » (message de placeholder — à remplacer par la vraie UI Epic 1)

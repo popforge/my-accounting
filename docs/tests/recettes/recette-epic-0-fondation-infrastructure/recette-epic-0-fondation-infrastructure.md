@@ -14,7 +14,7 @@
 
 | Story | Titre | Fichier recette | Statut |
 |-------|-------|-----------------|--------|
-| 0.0 | Intégration OIDC et déploiement initial | [recette-story-0-0-integration-oidc-deploiement-initial.md](recette-story-0-0-integration-oidc-deploiement-initial.md) | ☐ Passe  ☐ Partiel  ☐ Échoue |
+| 0.0 | Intégration OIDC et déploiement initial | [recette-story-0-0-integration-oidc-deploiement-initial.md](recette-story-0-0-integration-oidc-deploiement-initial.md) | ☑ Passe  ☐ Partiel  ☐ Échoue |
 
 ---
 
@@ -22,26 +22,24 @@
 
 | Story | Date recette | Validée par | Résultat |
 |-------|-------------|------------|----------|
-| 0.0 | | Rachel Lavoie | ☐ Passe  ☐ Partiel  ☐ Échoue |
+| 0.0 | 2026-05-05 | Rachel Lavoie | ☑ Passe  ☐ Partiel  ☐ Échoue |
 
 ---
 
 ## Items bloqués (dépendances cross-story)
 
-| TC bloqué | Raison | Débloqué par |
-|-----------|--------|-------------|
-| TC-0.0-05 (E2E steps authentification) | Fixture `auth-session` en attente secrets GitHub Actions | Stratégie E2E Phase 2 (post-Epic 0) |
+Aucun — tous les items bloqués ont été résolus.
 
 ---
 
 ## Résultat global Épic 0
 
-**Date de clôture :** _______________
+**Date de clôture :** 2026-05-05
 **Signé par :** Rachel Lavoie
 
-- ☐ **Épic approuvée** — toutes les stories passent
+- ☑ **Épic approuvée** — toutes les stories passent
 - ☐ **Épic approuvée partiellement** — items bloqués documentés ci-dessus
 - ☐ **Épic rejetée** — voir notes ci-dessous
 
 **Notes globales :**
->
+> Story 0.0 — TC-0.0-01 à TC-0.0-05 tous validés. Infrastructure OIDC opérationnelle en Beta.
